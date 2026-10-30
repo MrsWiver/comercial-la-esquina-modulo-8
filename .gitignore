@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.env
+.env.*
+!.env.example
+datos/practica/*
+!datos/practica/.gitkeep
+*.pyc
+.DS_Store
+datos/respaldos/
+
+# Metadatos de iconos del Finder (Icon seguido de un carácter).
+Icon?

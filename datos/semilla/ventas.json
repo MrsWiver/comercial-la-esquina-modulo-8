@@ -1,0 +1,150 @@
+[
+  {
+    "id": "V-001",
+    "fecha_comercial": "2026-05-11",
+    "cliente": "Cliente de práctica 001 (ficticio)",
+    "factura_externa": null,
+    "lineas": [
+      {
+        "producto_codigo": "FER-0020",
+        "cantidad": 1,
+        "precio_unitario": 51300,
+        "nombre": "Destornillador plano Titan Especial"
+      },
+      {
+        "producto_codigo": "FER-0194",
+        "cantidad": 1,
+        "precio_unitario": 79400,
+        "nombre": "Guante de trabajo Roble Grande"
+      }
+    ]
+  },
+  {
+    "id": "V-002",
+    "fecha_comercial": "2026-08-26",
+    "cliente": "Cliente de práctica 002 (ficticio)",
+    "factura_externa": null,
+    "lineas": [
+      {
+        "producto_codigo": "PAN-0012",
+        "cantidad": 1,
+        "precio_unitario": 22000,
+        "nombre": "Pan aliñado Trigal Pequeño"
+      }
+    ]
+  },
+  {
+    "id": "V-003",
+    "fecha_comercial": "2026-09-23",
+    "cliente": "Cliente de práctica 003 (ficticio)",
+    "factura_externa": null,
+    "lineas": [
+      {
+        "producto_codigo": "FER-0012",
+        "cantidad": 1,
+        "precio_unitario": 91600,
+        "nombre": "Destornillador plano Andino Pequeño"
+      },
+      {
+        "producto_codigo": "FER-0064",
+        "cantidad": 1,
+        "precio_unitario": 42600,
+        "nombre": "Nivel de burbuja Roble Grande"
+      }
+    ]
+  },
+  {
+    "id": "V-004",
+    "fecha_comercial": "2026-09-23",
+    "cliente": "Cliente de práctica 004 (ficticio)",
+    "factura_externa": null,
+    "lineas": [
+      {
+        "producto_codigo": "FER-0012",
+        "cantidad": 1,
+        "precio_unitario": 91600,
+        "nombre": "Destornillador plano Andino Pequeño"
+      },
+      {
+        "producto_codigo": "FER-0064",
+        "cantidad": 1,
+        "precio_unitario": 42600,
+        "nombre": "Nivel de burbuja Roble Grande"
+      }
+    ]
+  },
+  {
+    "id": "V-005",
+    "fecha_comercial": "2026-09-20",
+    "cliente": "Cliente de práctica 005 (ficticio)",
+    "factura_externa": null,
+    "lineas": [
+      {
+        "producto_codigo": "FER-0171",
+        "cantidad": 1,
+        "precio_unitario": 214500,
+        "nombre": "Disco de corte Forte Mini"
+      },
+      {
+        "producto_codigo": "FER-0209",
+        "cantidad": 1,
+        "precio_unitario": 185500,
+        "nombre": "Bombillo LED Roble Reforzado"
+      }
+    ]
+  },
+  {
+    "id": "V-006",
+    "fecha_comercial": "2026-09-23",
+    "cliente": "Cliente de práctica 006 (ficticio)",
+    "factura_externa": null,
+    "lineas": [
+      {
+        "producto_codigo": "ABA-0003",
+        "cantidad": 1,
+        "precio_unitario": 67000,
+        "nombre": "Arroz blanco Rico Día Mediano"
+      },
+      {
+        "producto_codigo": "ABA-0125",
+        "cantidad": 1,
+        "precio_unitario": 33000,
+        "nombre": "Leche UHT Casa Real Familiar"
+      }
+    ]
+  },
+  {
+    "id": "V-007",
+    "fecha_comercial": "2026-09-23",
+    "cliente": "Cliente de práctica 007 (ficticio)",
+    "factura_externa": null,
+    "lineas": [
+      {
+        "producto_codigo": "FER-0038",
+        "cantidad": 1,
+        "precio_unitario": 172100,
+        "nombre": "Alicate universal Maestro Premium"
+      }
+    ]
+  },
+  {
+    "id": "V-008",
+    "fecha_comercial": "2026-09-17",
+    "cliente": "Cliente de práctica 008 (ficticio)",
+    "factura_externa": null,
+    "lineas": [
+      {
+        "producto_codigo": "ABA-0002",
+        "cantidad": 1,
+        "precio_unitario": 26000,
+        "nombre": "Arroz blanco La Despensa Pequeño"
+      },
+      {
+        "producto_codigo": "ABA-0166",
+        "cantidad": 1,
+        "precio_unitario": 50800,
+        "nombre": "Galleta salada Buen Campo Económico"
+      }
+    ]
+  }
+]

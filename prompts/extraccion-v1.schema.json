@@ -1,0 +1,667 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/la-esquina/extraccion-v1.schema.json",
+  "title": "Extracción de soporte v1",
+  "type": "object",
+  "properties": {
+    "document_type": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "card_voucher",
+        "transfer",
+        "addi_credit",
+        "sistecredito_credit",
+        "expense",
+        null
+      ]
+    },
+    "payment_brand_or_medium": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "payment_medium_alternatives": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "currency_observed": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Solo moneda explícita. No inferir COP de un logo."
+    },
+    "operation_status_observed": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Texto visible; no verifica autenticidad ni abono."
+    },
+    "amount_basis": {
+      "type": "string",
+      "enum": [
+        "observed_total",
+        "financed_value",
+        "missing"
+      ]
+    },
+    "total_amount": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "inferred_amount": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "stated_cash_amount": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "document_date": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "document_time": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d$"
+    },
+    "time_precision": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "minute",
+        "second",
+        null
+      ]
+    },
+    "merchant_or_store": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "notes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "references": {
+      "type": "object",
+      "properties": {
+        "receipt": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "authorization": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rrn": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "transaction_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "invoice": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "promissory_note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "application_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "credit_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "order_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "transfer_reference": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "handwritten": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "receipt",
+        "authorization",
+        "rrn",
+        "transaction_id",
+        "invoice",
+        "promissory_note",
+        "application_id",
+        "credit_id",
+        "order_id",
+        "transfer_reference",
+        "handwritten"
+      ],
+      "additionalProperties": false
+    },
+    "confidence": {
+      "type": "object",
+      "properties": {
+        "document_type": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "payment_brand_or_medium": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "payment_medium_alternatives": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "currency_observed": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "operation_status_observed": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "amount_basis": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "total_amount": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "inferred_amount": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "stated_cash_amount": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "document_date": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "document_time": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "time_precision": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "merchant_or_store": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "notes": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "references": {
+          "type": "object",
+          "properties": {
+            "receipt": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "authorization": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "rrn": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "transaction_id": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "invoice": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "promissory_note": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "application_id": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "credit_id": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "order_id": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "transfer_reference": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "handwritten": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "required": [
+            "receipt",
+            "authorization",
+            "rrn",
+            "transaction_id",
+            "invoice",
+            "promissory_note",
+            "application_id",
+            "credit_id",
+            "order_id",
+            "transfer_reference",
+            "handwritten"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "document_type",
+        "payment_brand_or_medium",
+        "payment_medium_alternatives",
+        "currency_observed",
+        "operation_status_observed",
+        "amount_basis",
+        "total_amount",
+        "inferred_amount",
+        "stated_cash_amount",
+        "document_date",
+        "document_time",
+        "time_precision",
+        "merchant_or_store",
+        "notes",
+        "references"
+      ],
+      "additionalProperties": false
+    },
+    "observed_text": {
+      "type": "object",
+      "properties": {
+        "document_type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "payment_brand_or_medium": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "payment_medium_alternatives": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "currency_observed": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "operation_status_observed": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "amount_basis": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "total_amount": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "inferred_amount": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "stated_cash_amount": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "document_date": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "document_time": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "time_precision": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "merchant_or_store": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "references": {
+          "type": "object",
+          "properties": {
+            "receipt": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "authorization": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "rrn": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "transaction_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "invoice": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "promissory_note": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "application_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "credit_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "order_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "transfer_reference": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "handwritten": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "receipt",
+            "authorization",
+            "rrn",
+            "transaction_id",
+            "invoice",
+            "promissory_note",
+            "application_id",
+            "credit_id",
+            "order_id",
+            "transfer_reference",
+            "handwritten"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "document_type",
+        "payment_brand_or_medium",
+        "payment_medium_alternatives",
+        "currency_observed",
+        "operation_status_observed",
+        "amount_basis",
+        "total_amount",
+        "inferred_amount",
+        "stated_cash_amount",
+        "document_date",
+        "document_time",
+        "time_precision",
+        "merchant_or_store",
+        "notes",
+        "references"
+      ],
+      "additionalProperties": false
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "missing_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "document_type",
+    "payment_brand_or_medium",
+    "payment_medium_alternatives",
+    "currency_observed",
+    "operation_status_observed",
+    "amount_basis",
+    "total_amount",
+    "inferred_amount",
+    "stated_cash_amount",
+    "document_date",
+    "document_time",
+    "time_precision",
+    "merchant_or_store",
+    "notes",
+    "references",
+    "confidence",
+    "observed_text",
+    "warnings",
+    "missing_fields"
+  ],
+  "additionalProperties": false
+}

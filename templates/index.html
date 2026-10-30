@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="practica-token" content="{{ csrf_token }}">
+<title>Comercial La Esquina · Comprobantes</title>
+<link rel="stylesheet" href="/static/app.css"><script src="/static/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#contenido">Saltar al contenido</a>
+<aside class="sidebar">
+<a class="brand" href="/"><span class="brand-mark">C.</span><span>cognitus<span class="brand-sub">AGENTIC ACADEMY</span></span></a>
+<div class="workspace">COMERCIAL LA ESQUINA<span>Espacio de práctica · Módulo 8</span></div>
+<nav aria-label="Secciones">
+<button class="nav selected" data-page="mesa" aria-current="page"><span aria-hidden="true">01</span>Mesa de trabajo</button>
+<button class="nav" data-page="ventas"><span aria-hidden="true">02</span>Ventas</button>
+<button class="nav" data-page="catalogo"><span aria-hidden="true">03</span>Catálogo</button>
+<button class="nav" data-page="practica"><span aria-hidden="true">04</span>Soportes de práctica</button>
+</nav>
+<div class="sidebar-foot"><span class="dot"></span> Local · un solo operador<p>Datos comerciales ficticios.<br>Los originales quedan en tu equipo.</p></div>
+</aside>
+<div class="shell">
+<header class="topbar"><span>Academia / Módulo 8 / <strong id="breadcrumb">Mesa de trabajo</strong></span><span class="pill">Proyecto inicial</span></header>
+<main id="contenido" tabindex="-1">
+<div class="page-heading"><div><p class="eyebrow">DE LA IMAGEN AL REGISTRO</p><h1 id="page-title">Cada soporte, en su lugar.</h1><p id="page-subtitle">Consulta tus ventas y prepara el siguiente paso.</p></div><div class="local-tag"><span class="dot"></span>SQLite local</div></div>
+<p id="global-error" class="error" role="alert" hidden></p>
+<div class="stats" aria-label="Estado de la práctica"><div><span>Productos en catálogo</span><strong id="stat-productos">—</strong></div><div><span>Ventas de práctica</span><strong id="stat-ventas">—</strong></div><div><span>Archivos cargados</span><strong id="stat-archivos">—</strong></div></div>
+<section id="page-mesa" class="page">
+<div class="work-grid">
+<section class="card chat-card" aria-labelledby="chat-title"><div class="card-heading"><div><p class="eyebrow">CONSULTA Y EXPLORA</p><h2 id="chat-title">Chat de práctica</h2></div><span class="pill subtle">Sin IA conectada</span></div>
+<div class="info">Este chat consulta SQLite con comandos. El agente se construye en clase.</div>
+<div id="messages" class="messages" role="log" aria-live="polite" aria-label="Conversación"></div>
+<div class="quick-actions"><button class="chip" data-command="ventas">Ver ventas</button><button class="chip" data-command="ventas 148000">Buscar $148.000</button><button class="chip" data-command="ayuda">Ayuda</button></div>
+<form id="chat-form"><label for="chat-input">Tu consulta</label><div class="compose"><textarea id="chat-input" maxlength="1000" rows="2" placeholder="Por ejemplo: venta V-001" required></textarea><button class="primary" id="send-chat" type="submit">Enviar</button></div><small>Enter para enviar · Mayús + Enter para una nueva línea.</small></form>
+</section>
+<section class="card evidence-card" aria-labelledby="evidence-title"><div class="card-heading"><div><p class="eyebrow">EVIDENCIA ORIGINAL</p><h2 id="evidence-title">Adjuntar soporte</h2></div><span class="step">1</span></div>
+<form id="upload-form"><label for="upload-input" class="upload-label">Elige una imagen de tu equipo</label><input id="upload-input" name="archivo" type="file" accept="image/png,image/jpeg" required><p class="hint">PNG o JPEG · hasta 8 MB · 24 millones de píxeles.</p><button id="upload-button" class="primary" type="submit">Cargar imagen</button></form>
+<p id="upload-status" class="status" role="status"></p>
+<div id="preview-empty" class="empty-preview"><svg viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="7" y="7" width="34" height="34" rx="5"/><circle cx="18" cy="18" r="4"/><path d="m8 35 11-10 8 7 6-5 8 9"/></svg><strong>Tu soporte aparecerá aquí</strong><span>También puedes elegir uno de los 12 ejemplos.</span><button class="chip" data-go="practica">Explorar soportes</button></div>
+<div id="preview" hidden><button id="enlarge" class="image-button" aria-label="Ampliar el soporte"><img id="preview-image" alt="Soporte cargado, pendiente de reconocimiento"></button><div id="file-detail" class="file-detail"></div><a id="original-link" target="_blank" rel="noopener">Abrir original</a><p class="info">Archivo conservado. Falta reconocer y revisar sus datos; todavía no es un comprobante registrado ni un pago asociado.</p></div>
+<div class="next-step"><span class="step small-step">2</span><div><strong>Reconocer y revisar</strong><p>Ejercicio 1 del taller. Implementa la extracción y su ficha de revisión.</p></div></div>
+</section>
+</div>
+<section class="card archive"><div class="card-heading"><div><h2>Archivos de esta práctica</h2><p class="hint">Persisten al reiniciar la aplicación. Cargar dos veces el mismo archivo conserva un solo ID.</p></div><button id="refresh-files" class="secondary">Actualizar</button></div><div id="file-list"></div></section>
+</section>
+<section id="page-ventas" class="page" hidden><div class="card"><div class="card-heading"><div><h2>Ventas existentes</h2><p class="hint">El total se calcula a partir de productos, cantidades y precios.</p></div><span class="pill subtle">Sin pagos asociados</span></div><form id="sales-form" class="filters"><div><label for="sales-q">ID o cliente</label><input id="sales-q" placeholder="V-001 o cliente"></div><div><label for="sales-amount">Total exacto en COP</label><input id="sales-amount" inputmode="numeric" type="number" min="0" max="1000000000" step="1" placeholder="148000"></div><div><label for="sales-date">Fecha de la venta</label><input id="sales-date" type="date"></div><button class="primary" type="submit">Buscar</button><button id="clear-sales" class="secondary" type="button">Limpiar</button></form><p class="info">Mismo valor y fecha son indicios. Confirma los detalles comerciales antes de asociar un soporte. Un abono puede tener otro valor.</p><p id="sales-count" class="hint" role="status"></p><div id="sales-table" class="table-wrap"></div></div></section>
+<section id="page-catalogo" class="page" hidden><div class="card"><div class="card-heading"><div><h2>Catálogo de productos</h2><p class="hint">Productos y precios del módulo 3. El taller no modifica existencias.</p></div></div><form id="products-form" class="filters"><div class="grow"><label for="products-q">Código o nombre</label><input id="products-q" placeholder="Arroz, resma, FER-0001…"></div><button class="primary">Buscar productos</button></form><p id="products-count" class="hint" role="status"></p><div id="products-table" class="table-wrap"></div><div class="pagination"><button id="previous-products" class="secondary">Anterior</button><span id="products-page"></span><button id="next-products" class="secondary">Siguiente</button></div></div></section>
+<section id="page-practica" class="page" hidden><div class="practice-intro"><h2>Doce imágenes, distintos recorridos.</h2><p>Hay ventas existentes y ventas por crear. Observa cada imagen y consulta antes de decidir. Los datos ocultos deben permanecer vacíos.</p><p class="info">Copias anonimizadas aportadas para el taller. Los nombres son ficticios. Su lectura no confirma autenticidad ni recepción de dinero.</p></div><div id="sample-list" class="sample-grid"></div></section>
+</main><footer>Fundación Cognitus <span>Comercial La Esquina · Base estudiantil v0.1</span></footer>
+</div>
+<dialog id="detail-dialog"><div class="dialog-head"><h2 id="dialog-title">Detalle</h2><button id="close-dialog" class="secondary">Cerrar</button></div><div id="dialog-content"></div></dialog>
+</body></html>

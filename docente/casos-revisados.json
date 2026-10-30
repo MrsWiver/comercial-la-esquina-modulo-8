@@ -1,0 +1,651 @@
+[
+  {
+    "archivo": "comprobante_001.png",
+    "sha256": "8f7556c2b3ebd048c9e47bc913b6293ca9b591a12e358a36eb28329616b94878",
+    "observado": {
+      "document_type": "sistecredito_credit",
+      "payment_brand_or_medium": "SISTECREDITO",
+      "total_amount": 130700,
+      "amount_basis": "financed_value",
+      "inferred_amount": null,
+      "stated_cash_amount": null,
+      "document_date": "2026-05-11",
+      "document_time": null,
+      "time_precision": null,
+      "merchant_or_store": null,
+      "notes": null,
+      "references": {
+        "receipt": null,
+        "authorization": null,
+        "rrn": null,
+        "transaction_id": null,
+        "invoice": null,
+        "promissory_note": null,
+        "application_id": null,
+        "credit_id": null,
+        "order_id": null,
+        "transfer_reference": null,
+        "handwritten": null
+      }
+    },
+    "escenario_docente": "asociar",
+    "ventas_candidatas": [
+      "V-001"
+    ],
+    "datos_comerciales_ficticios": {
+      "fecha_comercial": "2026-05-11",
+      "cliente": "Comprador práctica 001 (ficticio)",
+      "lineas": [
+        {
+          "producto_codigo": "FER-0020",
+          "cantidad": 1,
+          "precio_unitario": 51300,
+          "nombre": "Destornillador plano Titan Especial"
+        },
+        {
+          "producto_codigo": "FER-0194",
+          "cantidad": 1,
+          "precio_unitario": 79400,
+          "nombre": "Guante de trabajo Roble Grande"
+        }
+      ],
+      "total": 130700
+    },
+    "advertencias": [
+      "No hay hora visible."
+    ]
+  },
+  {
+    "archivo": "comprobante_002.png",
+    "sha256": "8eb036f8495853d8d729dccfb37a76cf528dbab886ac2c80f2a11bf47443feca",
+    "observado": {
+      "document_type": "sistecredito_credit",
+      "payment_brand_or_medium": "SISTECREDITO",
+      "total_amount": 158100,
+      "amount_basis": "financed_value",
+      "inferred_amount": null,
+      "stated_cash_amount": null,
+      "document_date": "2026-05-13",
+      "document_time": null,
+      "time_precision": null,
+      "merchant_or_store": null,
+      "notes": null,
+      "references": {
+        "receipt": null,
+        "authorization": null,
+        "rrn": null,
+        "transaction_id": null,
+        "invoice": null,
+        "promissory_note": null,
+        "application_id": null,
+        "credit_id": null,
+        "order_id": null,
+        "transfer_reference": null,
+        "handwritten": null
+      }
+    },
+    "escenario_docente": "crear",
+    "ventas_candidatas": [],
+    "datos_comerciales_ficticios": {
+      "fecha_comercial": "2026-05-13",
+      "cliente": "Comprador práctica 002 (ficticio)",
+      "lineas": [
+        {
+          "producto_codigo": "FER-0001",
+          "cantidad": 1,
+          "precio_unitario": 121300,
+          "nombre": "Martillo de uña Forte Mini"
+        },
+        {
+          "producto_codigo": "FER-0094",
+          "cantidad": 1,
+          "precio_unitario": 36800,
+          "nombre": "Tornillo galvanizado Roble Grande"
+        }
+      ],
+      "total": 158100
+    },
+    "advertencias": [
+      "No hay hora visible."
+    ]
+  },
+  {
+    "archivo": "comprobante_013.png",
+    "sha256": "470bd72e287b8526a372e38eb372b4e352f6fefe00ccb06bef28e48a3098bff7",
+    "observado": {
+      "document_type": "card_voucher",
+      "payment_brand_or_medium": null,
+      "total_amount": 22000,
+      "amount_basis": "observed_total",
+      "inferred_amount": null,
+      "stated_cash_amount": null,
+      "document_date": "2026-08-26",
+      "document_time": "16:33:00",
+      "time_precision": "minute",
+      "merchant_or_store": null,
+      "notes": null,
+      "references": {
+        "receipt": null,
+        "authorization": null,
+        "rrn": null,
+        "transaction_id": null,
+        "invoice": null,
+        "promissory_note": null,
+        "application_id": null,
+        "credit_id": null,
+        "order_id": null,
+        "transfer_reference": null,
+        "handwritten": null
+      }
+    },
+    "escenario_docente": "asociar",
+    "ventas_candidatas": [
+      "V-002"
+    ],
+    "datos_comerciales_ficticios": {
+      "fecha_comercial": "2026-08-26",
+      "cliente": "Comprador práctica 013 (ficticio)",
+      "lineas": [
+        {
+          "producto_codigo": "PAN-0012",
+          "cantidad": 1,
+          "precio_unitario": 22000,
+          "nombre": "Pan aliñado Trigal Pequeño"
+        }
+      ],
+      "total": 22000
+    },
+    "advertencias": [
+      "Referencias y datos ocultos deben quedar en null.",
+      "Segundos normalizados a 00; la imagen tiene precisión de minuto."
+    ]
+  },
+  {
+    "archivo": "comprobante_022.png",
+    "sha256": "55ba3c59adc5b06ab5a740da0c6118df42e6aa3ab8488a8fabc03f9819d36c58",
+    "observado": {
+      "document_type": "card_voucher",
+      "payment_brand_or_medium": "Visa crédito",
+      "total_amount": 134200,
+      "amount_basis": "observed_total",
+      "inferred_amount": null,
+      "stated_cash_amount": null,
+      "document_date": "2026-09-23",
+      "document_time": "10:29:00",
+      "time_precision": "minute",
+      "merchant_or_store": null,
+      "notes": null,
+      "references": {
+        "receipt": null,
+        "authorization": null,
+        "rrn": null,
+        "transaction_id": null,
+        "invoice": null,
+        "promissory_note": null,
+        "application_id": null,
+        "credit_id": null,
+        "order_id": null,
+        "transfer_reference": null,
+        "handwritten": null
+      }
+    },
+    "escenario_docente": "ambiguo",
+    "ventas_candidatas": [
+      "V-003",
+      "V-004"
+    ],
+    "datos_comerciales_ficticios": {
+      "fecha_comercial": "2026-09-23",
+      "cliente": "Comprador práctica 022 (ficticio)",
+      "lineas": [
+        {
+          "producto_codigo": "FER-0012",
+          "cantidad": 1,
+          "precio_unitario": 91600,
+          "nombre": "Destornillador plano Andino Pequeño"
+        },
+        {
+          "producto_codigo": "FER-0064",
+          "cantidad": 1,
+          "precio_unitario": 42600,
+          "nombre": "Nivel de burbuja Roble Grande"
+        }
+      ],
+      "total": 134200
+    },
+    "advertencias": [
+      "Referencias y datos ocultos deben quedar en null.",
+      "Segundos normalizados a 00; la imagen tiene precisión de minuto."
+    ]
+  },
+  {
+    "archivo": "comprobante_026.png",
+    "sha256": "79e49be10a2d2ce9385cb43ef27c4c3dd6e29b866e16e42bba390746ec1bb2e9",
+    "observado": {
+      "document_type": "card_voucher",
+      "payment_brand_or_medium": null,
+      "total_amount": 30000,
+      "amount_basis": "observed_total",
+      "inferred_amount": null,
+      "stated_cash_amount": null,
+      "document_date": "2026-09-18",
+      "document_time": "15:26:00",
+      "time_precision": "minute",
+      "merchant_or_store": null,
+      "notes": null,
+      "references": {
+        "receipt": null,
+        "authorization": null,
+        "rrn": null,
+        "transaction_id": null,
+        "invoice": null,
+        "promissory_note": null,
+        "application_id": null,
+        "credit_id": null,
+        "order_id": null,
+        "transfer_reference": null,
+        "handwritten": null
+      }
+    },
+    "escenario_docente": "crear",
+    "ventas_candidatas": [],
+    "datos_comerciales_ficticios": {
+      "fecha_comercial": "2026-09-18",
+      "cliente": "Comprador práctica 026 (ficticio)",
+      "lineas": [
+        {
+          "producto_codigo": "MIS-0234",
+          "cantidad": 1,
+          "precio_unitario": 30000,
+          "nombre": "Kit de costura Nova Grande"
+        }
+      ],
+      "total": 30000
+    },
+    "advertencias": [
+      "Referencias y datos ocultos deben quedar en null.",
+      "Segundos normalizados a 00; la imagen tiene precisión de minuto."
+    ]
+  },
+  {
+    "archivo": "comprobante_037.png",
+    "sha256": "f7001f225c66473a498ab70af42abf4832c28a9762c13e58de3adbacb0965a15",
+    "observado": {
+      "document_type": "addi_credit",
+      "payment_brand_or_medium": "ADDI",
+      "total_amount": 400000,
+      "amount_basis": "financed_value",
+      "inferred_amount": null,
+      "stated_cash_amount": null,
+      "document_date": "2026-09-20",
+      "document_time": "10:31:00",
+      "time_precision": "minute",
+      "merchant_or_store": null,
+      "notes": null,
+      "references": {
+        "receipt": null,
+        "authorization": null,
+        "rrn": null,
+        "transaction_id": null,
+        "invoice": null,
+        "promissory_note": null,
+        "application_id": null,
+        "credit_id": null,
+        "order_id": null,
+        "transfer_reference": null,
+        "handwritten": null
+      }
+    },
+    "escenario_docente": "asociar",
+    "ventas_candidatas": [
+      "V-005"
+    ],
+    "datos_comerciales_ficticios": {
+      "fecha_comercial": "2026-09-20",
+      "cliente": "Comprador práctica 037 (ficticio)",
+      "lineas": [
+        {
+          "producto_codigo": "FER-0171",
+          "cantidad": 1,
+          "precio_unitario": 214500,
+          "nombre": "Disco de corte Forte Mini"
+        },
+        {
+          "producto_codigo": "FER-0209",
+          "cantidad": 1,
+          "precio_unitario": 185500,
+          "nombre": "Bombillo LED Roble Reforzado"
+        }
+      ],
+      "total": 400000
+    },
+    "advertencias": [
+      "Referencias y datos ocultos deben quedar en null.",
+      "Segundos normalizados a 00; la imagen tiene precisión de minuto."
+    ]
+  },
+  {
+    "archivo": "comprobante_039.png",
+    "sha256": "1aac34d1bcb3fd2efd367a7dfd1c4a04b66e320e15c1642641b1a37d3cd292f7",
+    "observado": {
+      "document_type": "addi_credit",
+      "payment_brand_or_medium": "ADDI",
+      "total_amount": 118700,
+      "amount_basis": "financed_value",
+      "inferred_amount": null,
+      "stated_cash_amount": null,
+      "document_date": "2026-09-07",
+      "document_time": "17:34:00",
+      "time_precision": "minute",
+      "merchant_or_store": null,
+      "notes": null,
+      "references": {
+        "receipt": null,
+        "authorization": null,
+        "rrn": null,
+        "transaction_id": null,
+        "invoice": null,
+        "promissory_note": null,
+        "application_id": null,
+        "credit_id": null,
+        "order_id": null,
+        "transfer_reference": null,
+        "handwritten": null
+      }
+    },
+    "escenario_docente": "crear",
+    "ventas_candidatas": [],
+    "datos_comerciales_ficticios": {
+      "fecha_comercial": "2026-09-07",
+      "cliente": "Comprador práctica 039 (ficticio)",
+      "lineas": [
+        {
+          "producto_codigo": "FER-0099",
+          "cantidad": 1,
+          "precio_unitario": 118700,
+          "nombre": "Tornillo galvanizado Roble Reforzado"
+        }
+      ],
+      "total": 118700
+    },
+    "advertencias": [
+      "Referencias y datos ocultos deben quedar en null.",
+      "Segundos normalizados a 00; la imagen tiene precisión de minuto."
+    ]
+  },
+  {
+    "archivo": "comprobante_041.png",
+    "sha256": "fde6838b72f09153ad416e37e97238f466e14e42e81f85f26b6a91f09f96d45e",
+    "observado": {
+      "document_type": "transfer",
+      "payment_brand_or_medium": "NEQUI",
+      "total_amount": 19400,
+      "amount_basis": "observed_total",
+      "inferred_amount": null,
+      "stated_cash_amount": 50000,
+      "document_date": "2026-09-23",
+      "document_time": "18:21:00",
+      "time_precision": "minute",
+      "merchant_or_store": null,
+      "notes": "efectivo osea 50000",
+      "references": {
+        "receipt": null,
+        "authorization": null,
+        "rrn": null,
+        "transaction_id": null,
+        "invoice": null,
+        "promissory_note": null,
+        "application_id": null,
+        "credit_id": null,
+        "order_id": null,
+        "transfer_reference": null,
+        "handwritten": null
+      }
+    },
+    "escenario_docente": "abono",
+    "ventas_candidatas": [
+      "V-006"
+    ],
+    "datos_comerciales_ficticios": {
+      "fecha_comercial": "2026-09-23",
+      "cliente": "Comprador práctica 041 (ficticio)",
+      "lineas": [
+        {
+          "producto_codigo": "ABA-0003",
+          "cantidad": 1,
+          "precio_unitario": 67000,
+          "nombre": "Arroz blanco Rico Día Mediano"
+        },
+        {
+          "producto_codigo": "ABA-0125",
+          "cantidad": 1,
+          "precio_unitario": 33000,
+          "nombre": "Leche UHT Casa Real Familiar"
+        }
+      ],
+      "total": 100000
+    },
+    "advertencias": [
+      "Referencias y datos ocultos deben quedar en null.",
+      "Segundos normalizados a 00; la imagen tiene precisión de minuto."
+    ]
+  },
+  {
+    "archivo": "comprobante_050.png",
+    "sha256": "8160f153eb3383f6b1feb03beec0c9c56b83b8bceb3321ccee280adc5f5e6cc3",
+    "observado": {
+      "document_type": "transfer",
+      "payment_brand_or_medium": "DAVIPLATA",
+      "total_amount": 172100,
+      "amount_basis": "observed_total",
+      "inferred_amount": null,
+      "stated_cash_amount": null,
+      "document_date": "2026-09-23",
+      "document_time": "10:41:00",
+      "time_precision": "minute",
+      "merchant_or_store": null,
+      "notes": null,
+      "references": {
+        "receipt": null,
+        "authorization": null,
+        "rrn": null,
+        "transaction_id": null,
+        "invoice": null,
+        "promissory_note": null,
+        "application_id": null,
+        "credit_id": null,
+        "order_id": null,
+        "transfer_reference": null,
+        "handwritten": null
+      }
+    },
+    "escenario_docente": "asociar",
+    "ventas_candidatas": [
+      "V-007"
+    ],
+    "datos_comerciales_ficticios": {
+      "fecha_comercial": "2026-09-23",
+      "cliente": "Comprador práctica 050 (ficticio)",
+      "lineas": [
+        {
+          "producto_codigo": "FER-0038",
+          "cantidad": 1,
+          "precio_unitario": 172100,
+          "nombre": "Alicate universal Maestro Premium"
+        }
+      ],
+      "total": 172100
+    },
+    "advertencias": [
+      "Referencias y datos ocultos deben quedar en null.",
+      "Segundos normalizados a 00; la imagen tiene precisión de minuto."
+    ]
+  },
+  {
+    "archivo": "comprobante_052.png",
+    "sha256": "80923b77f45e9e328ee90f360a9510390054e44429ad6db294a00490ce397089",
+    "observado": {
+      "document_type": "transfer",
+      "payment_brand_or_medium": "DAVIPLATA",
+      "total_amount": 280000,
+      "amount_basis": "observed_total",
+      "inferred_amount": null,
+      "stated_cash_amount": null,
+      "document_date": "2026-09-08",
+      "document_time": "18:40:00",
+      "time_precision": "minute",
+      "merchant_or_store": null,
+      "notes": null,
+      "references": {
+        "receipt": null,
+        "authorization": null,
+        "rrn": null,
+        "transaction_id": null,
+        "invoice": null,
+        "promissory_note": null,
+        "application_id": null,
+        "credit_id": null,
+        "order_id": null,
+        "transfer_reference": null,
+        "handwritten": null
+      }
+    },
+    "escenario_docente": "crear",
+    "ventas_candidatas": [],
+    "datos_comerciales_ficticios": {
+      "fecha_comercial": "2026-09-08",
+      "cliente": "Comprador práctica 052 (ficticio)",
+      "lineas": [
+        {
+          "producto_codigo": "FER-0012",
+          "cantidad": 1,
+          "precio_unitario": 91600,
+          "nombre": "Destornillador plano Andino Pequeño"
+        },
+        {
+          "producto_codigo": "FER-0127",
+          "cantidad": 1,
+          "precio_unitario": 188400,
+          "nombre": "Candado de seguridad Andino Clásico"
+        }
+      ],
+      "total": 280000
+    },
+    "advertencias": [
+      "Referencias y datos ocultos deben quedar en null.",
+      "Segundos normalizados a 00; la imagen tiene precisión de minuto."
+    ]
+  },
+  {
+    "archivo": "comprobante_054.png",
+    "sha256": "175e8d88f260ea3c9e02896341ec0c4e54a785514cc3e402a39a4d8bd8b7bfce",
+    "observado": {
+      "document_type": "transfer",
+      "payment_brand_or_medium": "DAVIPLATA",
+      "total_amount": 148000,
+      "amount_basis": "observed_total",
+      "inferred_amount": null,
+      "stated_cash_amount": null,
+      "document_date": "2026-09-11",
+      "document_time": "12:14:00",
+      "time_precision": "minute",
+      "merchant_or_store": null,
+      "notes": null,
+      "references": {
+        "receipt": null,
+        "authorization": null,
+        "rrn": null,
+        "transaction_id": null,
+        "invoice": null,
+        "promissory_note": null,
+        "application_id": null,
+        "credit_id": null,
+        "order_id": null,
+        "transfer_reference": null,
+        "handwritten": null
+      }
+    },
+    "escenario_docente": "crear",
+    "ventas_candidatas": [],
+    "datos_comerciales_ficticios": {
+      "fecha_comercial": "2026-09-11",
+      "cliente": "Comprador práctica 054 (ficticio)",
+      "lineas": [
+        {
+          "producto_codigo": "FER-0001",
+          "cantidad": 1,
+          "precio_unitario": 121300,
+          "nombre": "Martillo de uña Forte Mini"
+        },
+        {
+          "producto_codigo": "FER-0222",
+          "cantidad": 1,
+          "precio_unitario": 26700,
+          "nombre": "Cinta aislante Andino Pequeño"
+        }
+      ],
+      "total": 148000
+    },
+    "advertencias": [
+      "Referencias y datos ocultos deben quedar en null.",
+      "Segundos normalizados a 00; la imagen tiene precisión de minuto."
+    ]
+  },
+  {
+    "archivo": "comprobante_060.png",
+    "sha256": "c6df561e3d711a516cfd63a5b88fc86974848456dcba87b5d0324cc066622db6",
+    "observado": {
+      "document_type": "transfer",
+      "payment_brand_or_medium": "DAVIPLATA",
+      "total_amount": 76800,
+      "amount_basis": "observed_total",
+      "inferred_amount": null,
+      "stated_cash_amount": null,
+      "document_date": "2026-09-18",
+      "document_time": "18:04:00",
+      "time_precision": "minute",
+      "merchant_or_store": null,
+      "notes": null,
+      "references": {
+        "receipt": null,
+        "authorization": null,
+        "rrn": null,
+        "transaction_id": null,
+        "invoice": null,
+        "promissory_note": null,
+        "application_id": null,
+        "credit_id": null,
+        "order_id": null,
+        "transfer_reference": null,
+        "handwritten": null
+      }
+    },
+    "escenario_docente": "fecha_distinta",
+    "ventas_candidatas": [
+      "V-008"
+    ],
+    "datos_comerciales_ficticios": {
+      "fecha_comercial": "2026-09-17",
+      "cliente": "Comprador práctica 060 (ficticio)",
+      "lineas": [
+        {
+          "producto_codigo": "ABA-0002",
+          "cantidad": 1,
+          "precio_unitario": 26000,
+          "nombre": "Arroz blanco La Despensa Pequeño"
+        },
+        {
+          "producto_codigo": "ABA-0166",
+          "cantidad": 1,
+          "precio_unitario": 50800,
+          "nombre": "Galleta salada Buen Campo Económico"
+        }
+      ],
+      "total": 76800
+    },
+    "advertencias": [
+      "Referencias y datos ocultos deben quedar en null.",
+      "Segundos normalizados a 00; la imagen tiene precisión de minuto."
+    ]
+  }
+]

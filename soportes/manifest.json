@@ -1,0 +1,50 @@
+[
+  {
+    "archivo": "comprobante_001.png",
+    "sha256": "8f7556c2b3ebd048c9e47bc913b6293ca9b591a12e358a36eb28329616b94878"
+  },
+  {
+    "archivo": "comprobante_002.png",
+    "sha256": "8eb036f8495853d8d729dccfb37a76cf528dbab886ac2c80f2a11bf47443feca"
+  },
+  {
+    "archivo": "comprobante_013.png",
+    "sha256": "470bd72e287b8526a372e38eb372b4e352f6fefe00ccb06bef28e48a3098bff7"
+  },
+  {
+    "archivo": "comprobante_022.png",
+    "sha256": "55ba3c59adc5b06ab5a740da0c6118df42e6aa3ab8488a8fabc03f9819d36c58"
+  },
+  {
+    "archivo": "comprobante_026.png",
+    "sha256": "79e49be10a2d2ce9385cb43ef27c4c3dd6e29b866e16e42bba390746ec1bb2e9"
+  },
+  {
+    "archivo": "comprobante_037.png",
+    "sha256": "f7001f225c66473a498ab70af42abf4832c28a9762c13e58de3adbacb0965a15"
+  },
+  {
+    "archivo": "comprobante_039.png",
+    "sha256": "1aac34d1bcb3fd2efd367a7dfd1c4a04b66e320e15c1642641b1a37d3cd292f7"
+  },
+  {
+    "archivo": "comprobante_041.png",
+    "sha256": "fde6838b72f09153ad416e37e97238f466e14e42e81f85f26b6a91f09f96d45e"
+  },
+  {
+    "archivo": "comprobante_050.png",
+    "sha256": "8160f153eb3383f6b1feb03beec0c9c56b83b8bceb3321ccee280adc5f5e6cc3"
+  },
+  {
+    "archivo": "comprobante_052.png",
+    "sha256": "80923b77f45e9e328ee90f360a9510390054e44429ad6db294a00490ce397089"
+  },
+  {
+    "archivo": "comprobante_054.png",
+    "sha256": "175e8d88f260ea3c9e02896341ec0c4e54a785514cc3e402a39a4d8bd8b7bfce"
+  },
+  {
+    "archivo": "comprobante_060.png",
+    "sha256": "c6df561e3d711a516cfd63a5b88fc86974848456dcba87b5d0324cc066622db6"
+  }
+]

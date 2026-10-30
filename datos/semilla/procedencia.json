@@ -1,0 +1,12 @@
+{
+  "fuente": "Modulo3/proyecto-inicial 2/datos/procesados/inventario.db",
+  "fecha_preparacion": "2026-10-30",
+  "tablas_reutilizadas": {
+    "proveedores": 75,
+    "productos": 1250,
+    "inventario": 827
+  },
+  "proveedores": "Solo ID, razón social y categoría; se excluyeron teléfonos, correos, contactos y NIT.",
+  "ventas": "Ocho ventas ficticias nuevas, sin pagos. Productos y precios proceden del catálogo, sin modificarlo.",
+  "original_sha256": "9b645ad85e071fb8fbcdf202f8ed585fc5945a0840c8dd0af827fe68da355f4c"
+}
