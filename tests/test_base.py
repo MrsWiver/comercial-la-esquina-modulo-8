@@ -136,13 +136,14 @@ def test_csrf_and_origin(client):
 @pytest.mark.parametrize('endpoint',['/api/comprobantes','/api/propuestas','/api/propuestas/ejecutar'])
 def test_class_extension_has_no_fake_success(client,endpoint):
     r=client.post(endpoint,json={'approved':True},headers=headers(client))
-    assert r.status_code==501 and r.json['estado']=='pendiente_taller'
+    assert r.status_code in (400,404,409) and 'error' in r.json
     assert len(client.get('/api/ventas').json)==8
 
-def test_ocr_pending_does_not_invent(client):
+def test_ocr_without_key_does_not_invent(client,monkeypatch):
+    monkeypatch.setattr('src.ia.configuracion',lambda:{'OPENAI_API_KEY':'','OPENAI_OCR_MODEL':'gpt-5.6-luna','OPENAI_CHAT_MODEL':'gpt-5.6-luna'})
     f=upload(client).json['archivo']
     r=client.post('/api/extraer/'+f['id'],headers=headers(client))
-    assert r.status_code==501 and 'total_amount' not in r.json
+    assert r.status_code==502 and 'total_amount' not in r.json
     assert client.post('/api/extraer/missing',headers=headers(client)).status_code==404
 
 def test_twelve_examples_and_hashes(client):

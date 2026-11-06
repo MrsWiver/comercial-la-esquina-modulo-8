@@ -1,17 +1,10 @@
-# Comercial La Esquina · Proyecto inicial del módulo 8
+# Comercial La Esquina · Módulo 8
 
-Una app local para comenzar a construir el agente de comprobantes. Incluye chat de práctica, imágenes, consultas y SQLite. **Todavía no reconoce comprobantes ni registra pagos o nuevas ventas. Esas son las actividades del taller.**
+App local de aprendizaje para leer soportes, revisar sus datos y relacionarlos con ventas. Incluye extracción mediante OpenAI, agente con herramientas controladas y operaciones comerciales con revisión y aprobación humana. **OCR validado con una llamada real y el soporte 054 (6 de noviembre de 2026). El agente también se probó con llamadas reales en una copia aislada: búsqueda y propuesta completa pendiente desde la primera preparación, sin ejecución. Los demás escenarios no tienen validación real integral.**
 
-## Empezar en tres pasos
+## Iniciar
 
-Necesitas [uv](https://docs.astral.sh/uv/getting-started/installation/) y Python 3.11 o superior. Si no tienes Python, `uv python install 3.14` lo instala. Puedes [descargar el proyecto listo en ZIP](https://github.com/MrsWiver/comercial-la-esquina-modulo-8/releases/latest) o clonarlo:
-
-```bash
-git clone https://github.com/MrsWiver/comercial-la-esquina-modulo-8.git
-cd comercial-la-esquina-modulo-8
-```
-
-Abre una terminal en la carpeta del proyecto, donde está este README.
+Requiere Python 3.11 o superior y uv.
 
 ```bash
 uv sync --locked
@@ -19,109 +12,90 @@ uv run python -m scripts.iniciar_datos
 uv run python -m src.app
 ```
 
-Abre **http://127.0.0.1:8008** en tu navegador. Mantén la terminal abierta. Para detener, presiona `Ctrl+C`. La app se ejecuta solo en tu equipo; no necesita cuentas ni clave de API en esta etapa. La primera instalación sí descarga las dependencias.
+Abre http://127.0.0.1:8008. Para detener, usa Ctrl+C. La base existente se conserva y se migra al iniciar; no se reemplaza automáticamente.
 
-El ZIP de la entrega trae `datos/practica/negocio.sqlite3` ya creada y limpia. Al clonar, esa base se crea desde la semilla con el comando anterior o al iniciar. La base de trabajo se excluye de Git para conservar separados los datos de cada estudiante. Nunca se reemplaza una base existente automáticamente.
+## Configurar IA
 
-## Qué puedes hacer desde el inicio
+```bash
+mkdir -p backend
+cp backend/.env.example backend/.env
+```
 
-- **Mesa de trabajo:** cargar PNG/JPEG, ver la imagen, ampliarla y recuperar los archivos guardados. El mismo archivo conserva un solo ID aunque se cargue dos veces.
-- **Chat de práctica:** escribir `ayuda`, `ventas`, `ventas 134200` o `venta V-001`. Consulta la base y conserva la conversación. Es determinista y está identificado como chat sin IA.
-- **Ventas:** buscar por ID, cliente, total exacto o fecha comercial. Abrir las líneas y su total calculado.
-- **Catálogo:** consultar los 1.250 productos con precios del módulo 3.
-- **Soportes de práctica:** explorar las 12 imágenes anonimizadas y cargar una al espacio de trabajo.
+Escribe la clave únicamente en `backend/.env`:
 
-Un archivo cargado **no es un comprobante revisado ni un pago registrado**. La app no descuenta inventario, no verifica movimientos bancarios y no llama a servicios externos.
+```dotenv
+OPENAI_API_KEY=tu_clave_privada
+OPENAI_OCR_MODEL=gpt-5.6-luna
+OPENAI_CHAT_MODEL=gpt-5.6-luna
+```
 
-## Qué construirás en clase
+Ambos modelos fueron elegidos explícitamente. El OCR rechaza sustituciones automáticas. La aplicación no lee `.env` de la raíz. No pegues claves en el chat, frontend o Git. La extracción con ese modelo funcionó en la cuenta usada para la prueba del 054. Su resultado no sustituye la revisión humana ni valida todos los escenarios. Un error de API se muestra sin fabricar una extracción ni un registro comercial.
 
-1. Reconocer la imagen con el prompt y esquema incluidos, revisar los datos y registrar el comprobante.
-2. Buscar ventas, preparar una asociación y guardarla después de una confirmación explícita.
-3. Completar una venta faltante con productos y cantidades confirmados, calcular su total y crearla con su relación al soporte.
+Sin clave puedes consultar ventas, catálogo, chat de comandos y los registros que ya existan. La IA solo se invoca al reconocer un soporte o enviar un mensaje con «Usar agente con IA» activado. No hay procesamiento automático en masa. Las imágenes se envían a OpenAI únicamente para la extracción solicitada; no se visitan enlaces ni QR.
 
-Las funciones por completar están en `src/ejercicios.py`. Sus rutas ya existen y responden HTTP 501, «pendiente del taller». No devuelven éxitos simulados. La ficha editable, las propuestas, sus aprobaciones, los registros comerciales y sus vistas de consulta forman parte de las actividades. Consulta [el taller por etapas](docs/TALLER.md) y [los contratos](docs/CONTRATOS.md).
+## Recorrido completo
 
-## Datos de la práctica
+1. En **Mesa de trabajo**, carga PNG/JPEG o elige uno de los 12 ejemplos. El archivo persiste; una carga idéntica conserva su ID.
+2. Pulsa **Reconocer soporte con IA**. La lectura validada queda conservada con modelo, fecha, procedencia y hash del prompt.
+3. En **Registros y propuestas**, revisa los campos contra el original visible. Corrige lo necesario y escribe una constancia de revisión. La extracción original permanece inmutable; las correcciones tienen procedencia humana.
+4. Prepara el registro, revisa la propuesta, marca la aprobación y pulsa **Aprobar esta versión**. Después pulsa **Ejecutar versión aprobada**. Puedes volver a consultar el comprobante por ID.
+5. Desde el comprobante busca ventas. Si hay varios candidatos, selecciona expresamente con el comerciante. Un monto igual no prueba una relación.
+6. Prepara la asociación indicando importe aplicado y confirmando moneda y ausencia de duplicidad. Si falta la venta, el comerciante debe confirmarlo y aportar fecha comercial, productos, cantidades y precios. Consulta y agrega productos del catálogo. Los datos incompletos pueden quedar como borrador.
+7. Revisa, aprueba y ejecuta la propuesta comercial. Una nueva venta, sus líneas, operación y vínculo se guardan juntos en una transacción. La repetición devuelve el mismo resultado. Una edición incrementa la versión e invalida la aprobación anterior.
+8. Si es otra fotografía de la misma operación, usa **Proponer adjuntar a operación existente**: añade evidencia sin duplicar dinero.
 
-El SQLite contiene **75 proveedores, 1.250 productos, 827 filas de inventario y 8 ventas ficticias nuevas**. Catálogo, precios e inventario proceden de una instantánea del módulo 3; se excluyeron contactos, teléfonos, correos y NIT de proveedores. El proyecto y Excel originales no se modificaron.
+El agente puede buscar ventas, consultar catálogo, consultar registros y preparar propuestas. Pide datos faltantes; no tiene herramientas de aprobación, ejecución, SQL ni acceso libre al disco. Tiene límites de seis pasos/herramientas y 90 segundos por turno. Los comandos `ayuda`, `ventas`, `ventas 134200` y `venta V-001` siguen disponibles en el chat determinista. El historial conserva el origen de cada mensaje.
 
-Siete soportes tienen escenarios con ventas existentes; uno de ellos tiene dos candidatos del mismo valor. Cinco soportes quedan sin venta. También hay un pago parcial y una fecha de pago distinta de la venta. Todos comienzan sin pagos asociados ni comprobantes registrados.
+## Límites comerciales
 
-Las líneas comerciales son **ficticias** y usan códigos y precios del catálogo. No son productos extraídos de los soportes. No se inventaron referencias de factura en las imágenes; sus identificadores están ocultos. Las imágenes conservan la anonimización aportada por el usuario. [Procedencia](datos/semilla/procedencia.json).
+- Catálogo y precios son la fuente comercial; el inventario es solo lectura.
+- No se registran compras ni se descuentan existencias.
+- No hay verificación bancaria: las operaciones permanecen `no_verificado`.
+- Financiación y cobro se distinguen. El efectivo mencionado no se suma al soporte.
+- Se admite una operación a una venta, varios abonos por venta y varios soportes para una operación.
+- Referencias son texto; ausencias son null. No se infieren cliente, factura o líneas desde un pago.
+- Si hay fracciones de peso se conserva la extracción y se bloquea el registro comercial, sin redondear.
+- Gastos y documentos sin clasificar se pueden revisar, pero no usar como ingreso.
+- Un hash detecta archivos idénticos. Referencias coincidentes bloquean otra operación; una segunda fotografía sin referencia requiere comparación y confirmación humana.
+- App para un operador en localhost. No incluye autenticación multiusuario ni despliegue público.
 
-La carpeta `docente/` contiene respuestas y datos para representar al comerciante durante la clase. Se puede retirar antes de distribuir al alumnado: la app no la utiliza. No hay una solución docente completa implementada.
+## Datos y archivos
 
-## Configuración privada para el ejercicio de IA
+SQLite contiene 75 proveedores sin contactos, 1.250 productos, 827 filas de inventario y ocho ventas ficticias. La semilla es independiente: no se lee ni modifica el proyecto o los materiales del módulo 3. Las líneas comerciales son ficticias y no se extrajeron de las imágenes.
 
-Cuando implementes el cliente de reconocimiento en el backend:
+`docente/` conserva escenarios inventados para enseñanza. La aplicación y las pruebas de OCR no lo utilizan como respuesta del modelo.
 
-1. Copia `.env.example` a `.env`.
-2. Escribe tu clave en `OPENAI_API_KEY`.
-3. Conserva **`OPENAI_OCR_MODEL=gpt-5.6-luna`**.
-4. Implementa la lectura de `.env` en el backend y el cliente de API como indica el taller.
+```text
+src/app.py              servidor, API local y protección de escrituras
+src/ia.py               cliente Responses API y configuración privada
+src/ejercicios.py       extracción, revisión, propuestas y transacciones
+src/agente.py           bucle de herramientas permitidas
+src/chat.py             chat de comandos determinista
+src/migraciones.py      migraciones v1 → v2 → v3, sin reemplazar datos
+src/db.py               semilla y consultas SQLite
+templates/ + static/    interfaz sin compilación
+backend/.env.example   plantilla privada, sin clave
+prompts/                prompt original íntegro y esquema v1
+soportes/               12 imágenes autorizadas
+datos/practica/         base e imágenes del operador (fuera de Git)
+```
 
-La base inicial **no lee `.env` ni envía imágenes a una API**. Cambiar esa configuración todavía no activa el reconocimiento. No pegues la clave en el chat, HTML, capturas o Git. El modelo conversacional se elige por separado al implementar el agente. El prompt original está íntegro en `prompts/extractor-v1.txt`.
-
-## Reiniciar o recuperar la práctica
-
-Cerrar la app y volver a abrirla conserva base, chat e imágenes. Para volver a las ocho ventas iniciales:
-
-1. Detén la app con `Ctrl+C`.
-2. Ejecuta `uv run python -m scripts.reiniciar`.
-3. Escribe `REINICIAR` cuando se solicite.
-4. Inicia de nuevo la app.
-
-El script guarda **toda la carpeta de práctica**, incluida la base y las imágenes, en `datos/respaldos/` con fecha UTC. Para recuperar un respaldo, detén la app, mueve la práctica actual a otra carpeta y copia el contenido completo del respaldo a `datos/practica/`. No recuperes únicamente SQLite si quieres conservar la evidencia visual.
-
-## Pruebas
+## Pruebas y evidencia
 
 ```bash
 uv run pytest -q
 ```
 
-Prueban la semilla, consultas exactas, ambigüedad, carga válida e inválida, tamaño, duplicados concurrentes, persistencia, protección de escrituras, fallas de disco y funciones pendientes. No son pruebas reales del modelo ni de los ejercicios sin implementar. [Evidencia y límites](docs/VALIDACION.md).
+Se verifican infraestructura, revisión, aprobación por versión, idempotencia concurrente, transacciones, pagos parciales, financiación, duplicidad de referencias, adjuntar evidencia, migraciones, límites del agente y ZIP limpio. Las pruebas con API simulada están identificadas y usan bases temporales. Consulta [VALIDACION](docs/VALIDACION.md) para separar evidencia real de mocks y [CONTRATOS](docs/CONTRATOS.md) para la API.
 
-## Si algo falla
+## Recuperar y entregar
 
-| Síntoma | Qué hacer |
-| --- | --- |
-| `uv` no se reconoce | Instala uv desde su documentación oficial y abre una terminal nueva. |
-| `No module named src` | Abre la terminal en la carpeta que contiene este README. Ejecuta los comandos con `-m`. |
-| Puerto 8008 ocupado | Cierra la otra instancia o ejecuta `uv run flask --app src.app:crear_app run --host 127.0.0.1 --port 8009`. Abre ese mismo puerto en el navegador. |
-| «Recarga la aplicación» | Recarga la pestaña: cada inicio genera un token nuevo para las escrituras locales. |
-| La carga falla | Usa una imagen PNG/JPEG válida, hasta 8 MB y 24 millones de píxeles. Un PDF o una extensión cambiada no basta. |
-| «Falta el original» | Recupera la carpeta de práctica completa desde un respaldo. No se declara que la evidencia esté disponible si falta el archivo. |
-| Chat no entiende una frase | Escribe `ayuda`. El agente conversacional todavía se construye en clase. |
-| «Pendiente del taller» | Es una función por implementar; no se arregla agregando una clave. |
-
-Usa una sola instancia por carpeta de datos. Al iniciar se recuperan temporales y archivos huérfanos de cargas interrumpidas. Este servidor está preparado para una práctica local de un operador. Publicar una app requiere una etapa diferente.
-
-## Estructura
-
-```text
-src/app.py              servidor y rutas
-src/db.py               creación y consultas SQLite
-src/chat.py             chat de comandos de práctica
-src/ejercicios.py       funciones para construir en clase
-templates/ + static/    interfaz sin proceso de compilación
-datos/esquema.sql       tablas y vista de totales
-datos/semilla/          instantánea portable y ventas ficticias
-datos/practica/         SQLite e imágenes de cada estudiante
-soportes/               12 imágenes de ejemplo
-prompts/                prompt íntegro y esquema de extracción v1
-docs/                   recorrido y contratos del taller
-docente/                respuestas y datos comerciales ficticios
-tests/                  pruebas automatizadas
-```
-
-Se eligió Python + Flask + HTML/CSS/JavaScript para que haya un solo servidor y no sea necesario instalar Node ni compilar el frontend. [Flask](https://flask.palletsprojects.com/en/stable/quickstart/), [Pillow](https://pillow.readthedocs.io/en/stable/reference/Image.html) y [SQLite](https://www.sqlite.org/foreignkeys.html) documentan las bases utilizadas. Las versiones están fijadas en `pyproject.toml` y `uv.lock`.
-
-Repositorio público: [MrsWiver/comercial-la-esquina-modulo-8](https://github.com/MrsWiver/comercial-la-esquina-modulo-8). Incluye los 12 soportes de práctica anonimizados. `.env`, `datos/practica/`, respaldos y archivos personales quedan excluidos de Git. Los datos comerciales se reconstruyen desde `datos/semilla/`.
-
-## Generar una entrega limpia
+Detén la app y ejecuta `uv run python -m scripts.reiniciar` para reiniciar con confirmación `REINICIAR`. Guarda respaldo de toda la práctica, incluidas imágenes y registros nuevos. Para recuperar, restaura la carpeta completa con la app detenida.
 
 ```bash
 uv run python -m scripts.empaquetar
 ```
 
-Crea `proyecto-inicial-modulo-8.zip` en la carpeta superior. Construye otra SQLite limpia desde la semilla, aunque tu práctica tenga imágenes o mensajes. Incluye la guía docente en una carpeta separada y los 12 ejemplos autorizados; excluye `.env`, entornos, cachés, archivos cargados y respaldos.
+Genera un ZIP en la carpeta superior con una SQLite nueva y migrada, los 12 ejemplos verificados y la plantilla de configuración sin clave. Excluye estado personal, claves, respaldos, entornos y cachés. La copia docente sigue separada.
+
+Si el puerto 8008 está ocupado, usa `uv run flask --app src.app:crear_app run --host 127.0.0.1 --port 8009`. Si una escritura pide recargar, recarga para obtener el token del nuevo inicio. Un error de conexión tras ejecutar se resuelve consultando la propuesta por ID antes de reintentar.

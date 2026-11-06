@@ -17,7 +17,8 @@ from PIL import Image, UnidentifiedImageError
 from werkzeug.exceptions import HTTPException
 from werkzeug.utils import secure_filename
 
-from . import ejercicios
+from . import ejercicios, ia, agente
+from .migraciones import migrar
 from .chat import responder
 from .db import ROOT, buscar_ventas, conectar, construir, consultar_venta
 
@@ -45,6 +46,7 @@ def crear_app(data_dir=None):
     # Recuperación tras caída entre escritura de archivo y commit SQLite.
     # El proceso solo ejecuta esto al iniciar; usar una sola instancia local.
     with conectar(base) as db:
+        migrar(db)
         conocidos={r[0] for r in db.execute('SELECT nombre_guardado FROM archivos_ingresados')}
     for archivo in uploads.iterdir():
         if archivo.name.endswith('.part') or (re.fullmatch(r'[a-f0-9]{64}\.(png|jpg)',archivo.name) and archivo.name not in conocidos):
@@ -74,6 +76,14 @@ def crear_app(data_dir=None):
     def error_http(e):
         mensaje='El archivo supera el límite de 8 MB.' if e.code==413 else e.description
         return jsonify(error=mensaje),e.code
+
+    @app.errorhandler(ejercicios.ErrorNegocio)
+    def error_negocio(e):
+        return jsonify(error=str(e)),e.status
+
+    @app.errorhandler(ia.ErrorIA)
+    def error_ia(e):
+        return jsonify(error=str(e)),502
 
     @app.errorhandler(sqlite3.Error)
     @app.errorhandler(OSError)
@@ -122,7 +132,8 @@ def crear_app(data_dir=None):
             v=consultar_venta(db,venta_id)
             if not v:
                 abort(404,description='No existe esa venta.')
-            return jsonify(v)
+            v['vinculos']=[dict(r) for r in db.execute('SELECT v.*,o.naturaleza,o.estado_financiero FROM vinculos v JOIN operaciones o ON o.id=v.operacion_id WHERE venta_id=?',(venta_id,))]
+        return jsonify(v)
 
     @app.get('/api/productos')
     def productos():
@@ -234,38 +245,82 @@ def crear_app(data_dir=None):
                            [('usuario',texto,ahora()),('asistente',respuesta,ahora())])
         return jsonify(respuesta=respuesta)
 
-    # Contratos de extensión: siempre 501 hasta completar el ejercicio respectivo.
+    @app.get('/api/configuracion')
+    def configuracion_publica():
+        cfg=ia.configuracion()
+        return jsonify(ocr_model=cfg['OPENAI_OCR_MODEL'],chat_model=cfg['OPENAI_CHAT_MODEL'],
+                       api_configurada=bool(cfg['OPENAI_API_KEY']))
+
+    @app.post('/api/agente')
+    def conversar_agente():
+        texto=cuerpo().get('texto')
+        if not isinstance(texto,str) or not 1<=len(texto.strip())<=1000:
+            abort(400,description='Escribe entre 1 y 1000 caracteres.')
+        with conectar(base) as db:
+            respuesta=agente.responder(texto,db)
+            db.executemany("INSERT INTO mensajes_chat(rol,texto,creado_en,origen) VALUES(?,?,?,'agente_ia')",
+                           [('usuario',texto,ahora()),('asistente',respuesta,ahora())])
+        return jsonify(respuesta=respuesta)
+
+    @app.get('/api/registros')
+    def registros():
+        with conectar(base) as db:
+            return jsonify(
+                extracciones=[ejercicios.consultar_extraccion(db,r[0]) for r in db.execute('SELECT id FROM extracciones ORDER BY creado_en DESC LIMIT 100')],
+                comprobantes=[ejercicios.consultar_comprobante(db,r[0]) for r in db.execute('SELECT id FROM comprobantes ORDER BY creado_en DESC LIMIT 100')],
+                propuestas=[ejercicios.consultar_propuesta(db,r[0]) for r in db.execute('SELECT id FROM propuestas ORDER BY creado_en DESC LIMIT 100')],
+                operaciones=[dict(r) for r in db.execute('SELECT * FROM operaciones LIMIT 100')])
+
+    @app.get('/api/extracciones/<ident>')
+    def consultar_extraccion(ident):
+        with conectar(base) as db:
+            return jsonify(ejercicios.consultar_extraccion(db,ident))
+
+    @app.get('/api/comprobantes/<ident>')
+    def consultar_comprobante(ident):
+        with conectar(base) as db:
+            return jsonify(ejercicios.consultar_comprobante(db,ident))
+
+    @app.get('/api/propuestas/<ident>')
+    def consultar_propuesta(ident):
+        with conectar(base) as db:
+            return jsonify(ejercicios.consultar_propuesta(db,ident))
+
+    @app.post('/api/propuestas/<ident>/aprobar')
+    def aprobar_propuesta(ident):
+        with conectar(base) as db:
+            return jsonify(ejercicios.aprobar(db,ident,cuerpo()))
+
+    # La extracción no produce efectos comerciales; las escrituras requieren propuestas.
+
     @app.post('/api/extraer/<archivo_id>')
     def extraer(archivo_id):
         with conectar(base) as db:
             archivo=db.execute('SELECT * FROM archivos_ingresados WHERE id=?',(archivo_id,)).fetchone()
             if not archivo:
                 abort(404,description='Carga primero un archivo.')
-            return pendiente(lambda:ejercicios.extraer_soporte(dict(archivo),db))
+            return respuesta_json(lambda:ejercicios.extraer_soporte(dict(archivo),db,origen=app.config.get('OCR_ORIGEN','api_real')))
 
-    def pendiente(accion):
-        try:
-            return jsonify(accion())
-        except NotImplementedError as e:
-            return jsonify(error=str(e),estado='pendiente_taller'),501
+    def respuesta_json(accion):
+        return jsonify(accion())
 
     @app.post('/api/comprobantes')
     def registrar():
         datos=cuerpo()
         with conectar(base) as db:
-            return pendiente(lambda:ejercicios.registrar_comprobante(datos,db))
+            return respuesta_json(lambda:ejercicios.registrar_comprobante(datos,db))
 
     @app.post('/api/propuestas')
     def preparar():
         datos=cuerpo()
         with conectar(base) as db:
-            return pendiente(lambda:ejercicios.preparar_operacion(datos,db))
+            return respuesta_json(lambda:ejercicios.preparar_operacion(datos,db))
 
     @app.post('/api/propuestas/ejecutar')
     def ejecutar():
         datos=cuerpo()
         with conectar(base) as db:
-            return pendiente(lambda:ejercicios.registrar_operacion_aprobada(datos,db))
+            return respuesta_json(lambda:ejercicios.registrar_operacion_aprobada(datos,db))
 
     return app
 
