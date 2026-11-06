@@ -16,7 +16,7 @@ Abre http://127.0.0.1:8008. Para detener, usa Ctrl+C. La base existente se conse
 
 ## Home y asistente flotante
 
-La página inicial está en `/`; la mesa de trabajo sigue en `/mesa`. La home muestra el catálogo real, búsqueda por nombre/código, filtros por categoría y el asistente abajo a la derecha, adaptable a móvil.
+La página inicial está en `/`; el sistema completo sigue en `/mesa`. La cabecera muestra «Sistema de gestión» y una barra de accesos directos a Mesa de trabajo, Ventas, Productos y precios, Soportes y Registros y propuestas, también en móvil. Desde la mesa puedes volver mediante «Inicio comercial». La home muestra el catálogo real, búsqueda por nombre/código, filtros por categoría y el asistente abajo a la derecha, adaptable a móvil.
 
 Adjuntar un PNG/JPEG inicia automáticamente su extracción y la conversación con el agente. El bot consulta el soporte y las ventas; si faltan productos o confirmaciones comerciales, los pregunta. La moneda comercial es siempre COP y la fecha de la nueva venta toma por defecto la fecha de la transacción leída del comprobante; solo se pide fecha si no es legible, y se respeta otra fecha indicada por la persona. No muestra pantallas de validación ni llamadas a herramientas. Al tener los datos completos presenta el original y un resumen final con **Confirmar y guardar**.
 

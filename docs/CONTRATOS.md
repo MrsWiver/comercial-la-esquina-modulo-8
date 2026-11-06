@@ -34,7 +34,7 @@ Se conservan resumen, catálogo paginado, búsqueda de ventas, líneas calculada
 | GET `/api/configuracion` | Modelos y booleano de clave configurada; nunca devuelve la clave |
 | GET `/api/productos?q=…&pagina=1` | Catálogo, 30 filas por página |
 | GET `/api/ventas?q=…&importe=…&fecha=…` | Filtros combinados, hasta 100 candidatos |
-| GET `/api/ventas/<id>` | Líneas, total calculado y vínculos con naturaleza y estado financiero |
+| GET `/api/ventas/<id>` | Líneas, total calculado y vínculos con naturaleza, estado financiero y comprobantes asociados (ID, archivo, nombre, disponibilidad y URL local del original) |
 | GET/POST `/api/archivos` | Lista / carga multipart con campo `archivo` |
 | GET `/archivos/<id>` | Original; 409 si falta evidencia |
 | GET `/api/casos` | Solo nombres y URLs de ejemplos; sin respuestas docentes |

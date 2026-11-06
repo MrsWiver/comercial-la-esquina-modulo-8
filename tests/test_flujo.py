@@ -246,6 +246,7 @@ def test_duplicate_reference_requires_attachment_without_new_money(client,monkey
     assert p2.status_code==200,p2.json
     aprobar_ejecutar(client,p2.json)
     assert len(client.get('/api/registros').json['operaciones'])==1
+    assert len(client.get('/api/ventas/V-003').json['vinculos'][0]['comprobantes'])==2
     assert client.get('/api/comprobantes/'+c2).json['operaciones'][0]['id']==result['operacion_id']
     assert client.get('/api/comprobantes/'+c1).json['revision']['references']['transfer_reference']=='000123'
 

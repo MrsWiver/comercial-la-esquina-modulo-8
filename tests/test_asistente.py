@@ -268,3 +268,27 @@ def test_cancel_does_not_undo_saved_business_records(app,client):
 
 def test_cancel_requires_page_token(client):
     assert client.post('/api/asistente/cancelar',json={'solicitud_id':'test'}).status_code==403
+
+
+def test_sale_includes_only_its_linked_original_and_review(client):
+    s=sesion(client);p=propuesta(client,s)
+    result=aprobar_ejecutar(client,p)
+    sale=client.get('/api/ventas/'+result['venta_id']).json
+    docs=sale['vinculos'][0]['comprobantes']
+    assert len(docs)==1
+    doc=docs[0]
+    assert doc['comprobante_id']==result['comprobante_id']
+    assert doc['archivo_id']==s['extraccion']['archivo_id']
+    assert doc['disponible'] and client.get(doc['original_url']).status_code==200
+    assert 'nombre_guardado' not in doc
+    assert client.get('/api/ventas/V-003').json['vinculos']==[]
+
+
+def test_sale_marks_missing_original_instead_of_broken_preview(app,client):
+    s=sesion(client);result=aprobar_ejecutar(client,propuesta(client,s))
+    with conectar(app.config['DB_PATH']) as db:
+        nombre=db.execute('SELECT nombre_guardado FROM archivos_ingresados WHERE id=?',(s['extraccion']['archivo_id'],)).fetchone()[0]
+    (app.config['UPLOAD_DIR']/nombre).unlink()
+    doc=client.get('/api/ventas/'+result['venta_id']).json['vinculos'][0]['comprobantes'][0]
+    assert not doc['disponible'] and doc['original_url'] is None
+    assert client.get('/archivos/'+doc['archivo_id']).status_code==409

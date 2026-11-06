@@ -1,3 +1,11 @@
+# Comprobantes desde el detalle de venta · 6 de noviembre de 2026
+
+`uv run pytest -q`: **85 pruebas aprobadas**. El detalle de venta incluye los comprobantes realmente vinculados a cada operación, con nombre de archivo, vista previa, apertura del original y acceso a la revisión. No se infieren relaciones por monto ni fecha. Se verifica un soporte por venta, varios soportes para la misma operación y ausencia del original en disco sin fingir disponibilidad. La respuesta pública no expone nombres internos de almacenamiento.
+
+Recorrido de lectura comprobado en la interfaz de la base existente: Ventas → V-002 → Comprobantes asociados → Ver comprobante; se abrió comprobante_013.png, vinculado a su cobro de 22000. El diálogo conserva el detalle de venta debajo y permite abrir el original en otra pestaña. No se modificaron asociaciones, ventas ni datos y no se hicieron llamadas al modelo.
+
+---
+
 # Cancelación de soporte u operación · 6 de noviembre de 2026
 
 `uv run pytest -q`: **83 pruebas aprobadas**. Se verifican cancelación idempotente de una propuesta previamente aprobada, invalidación de versión y aprobación, rechazo de ejecución/edición posterior, limpieza de mensajes y bloqueo, nueva conversación limpia con el mismo archivo y conservación de operaciones ya ejecutadas. También se prueban cancelación antes de cargar, durante OCR y mientras responde el agente: no se crean sesión/propuesta tardías ni se restauran mensajes. El endpoint exige token local.

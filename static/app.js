@@ -54,7 +54,40 @@ function table(headers,rows){const t=el('table'),head=el('thead'),hr=el('tr'),bo
 async function loadSales(){const params=new URLSearchParams({q:$('sales-q').value,importe:$('sales-amount').value,fecha:$('sales-date').value});const rows=await api('/api/ventas?'+params);$('sales-count').textContent=rows.length+' ventas encontradas'+(rows.length?'':'. Prueba otros criterios: no encontrar un total exacto no demuestra que falte la venta.');$('sales-table').replaceChildren(table(['Venta','Fecha comercial','Cliente','Total COP','Detalle'],rows.map(v=>{const b=el('button','Abrir','table-action');b.setAttribute('aria-label','Abrir venta '+v.id);b.addEventListener('click',()=>task(()=>saleDetail(v.id)));return [v.id,v.fecha_comercial,v.cliente||'Sin cliente',el('span',money(v.total),'number'),b];})));}
 $('sales-form').addEventListener('submit',e=>{e.preventDefault();task(()=>busy(e.submitter,loadSales));});
 $('clear-sales').addEventListener('click',()=>{$('sales-form').reset();task(loadSales);});
-async function saleDetail(id){const v=await api('/api/ventas/'+id),content=el('div'),meta=el('div',undefined,'detail-meta');for(const [label,value]of [['Fecha comercial',v.fecha_comercial],['Cliente',v.cliente||'Sin cliente'],['Factura externa',v.factura_externa||'No informada'],['Origen',v.origen]]){const n=el('div');n.append(el('span',label),document.createTextNode(value));meta.append(n);}content.append(meta);const wrap=el('div',undefined,'table-wrap');wrap.append(table(['Producto','Cantidad','Precio COP','Subtotal COP'],v.lineas.map(l=>[l.producto_codigo+' · '+l.nombre,l.cantidad,money(l.precio_unitario),money(l.subtotal)])));content.append(wrap,el('p','Total '+money(v.total)+' COP','total'),el('p',v.vinculos.length?v.vinculos.map(x=>x.id+' · '+money(x.importe)+' · '+x.naturaleza+' · '+x.estado_financiero).join(' | '):'Sin vínculos comerciales. La revisión de una imagen no verifica el abono bancario.','info'));openDialog('Venta '+id,content);}
+async function saleDetail(id){
+ const v=await api('/api/ventas/'+id),content=el('div'),meta=el('div',undefined,'detail-meta');
+ for(const [label,value]of [['Fecha comercial',v.fecha_comercial],['Cliente',v.cliente||'Sin cliente'],['Factura externa',v.factura_externa||'No informada'],['Origen',v.origen]]){const n=el('div');n.append(el('span',label),document.createTextNode(value));meta.append(n);}
+ content.append(meta);const wrap=el('div',undefined,'table-wrap');
+ wrap.append(table(['Producto','Cantidad','Precio COP','Subtotal COP'],v.lineas.map(l=>[l.producto_codigo+' · '+l.nombre,l.cantidad,money(l.precio_unitario),money(l.subtotal)])));
+ content.append(wrap,el('p','Total '+money(v.total)+' COP','total'));
+ if(!v.vinculos.length)content.append(el('p','Esta venta todavía no tiene comprobantes asociados.','info'));
+ else {
+  content.append(el('h3','Comprobantes asociados'));
+  for(const vinculo of v.vinculos){
+   const group=el('section',undefined,'sale-support-group');
+   group.append(el('p',money(vinculo.importe)+' aplicados · '+(vinculo.naturaleza==='financiacion'?'Financiación':'Cobro reportado')+' · Recepción bancaria sin verificar','info'));
+   const grid=el('div',undefined,'sale-support-grid');
+   for(const soporte of vinculo.comprobantes||[]){
+    const card=el('article',undefined,'sale-support-card');
+    if(soporte.disponible){
+     const see=el('button',undefined,'support-preview'),img=el('img');img.src=soporte.original_url;img.alt='Vista previa de '+soporte.nombre_original;img.loading='lazy';see.type='button';see.setAttribute('aria-label','Ver comprobante '+soporte.nombre_original);see.append(img);see.addEventListener('click',()=>receiptDialog(soporte));card.append(see);
+     const open=el('button','Ver comprobante','secondary');open.type='button';open.addEventListener('click',()=>receiptDialog(soporte));card.append(open);
+    }else card.append(el('p','Original no disponible. Recupera la evidencia desde un respaldo.','error'));
+    card.append(el('strong',soporte.nombre_original),el('small',soporte.comprobante_id));
+    const reading=el('button','Consultar datos revisados','table-action');reading.type='button';reading.addEventListener('click',()=>task(async()=>{$('detail-dialog').close();page('registros');await showReceipt(soporte.comprobante_id);}));card.append(reading);grid.append(card);
+   }
+   group.append(grid);content.append(group);
+  }
+ }
+ openDialog('Venta '+id,content);
+}
+function receiptDialog(soporte){
+ $('receipt-title').textContent=soporte.nombre_original;$('receipt-unavailable').hidden=true;$('receipt-original').hidden=false;$('receipt-original-link').hidden=false;
+ $('receipt-original').src=soporte.original_url;$('receipt-original-link').href=soporte.original_url;$('receipt-dialog').showModal();
+}
+$('close-receipt').addEventListener('click',()=>$('receipt-dialog').close());
+$('receipt-original').addEventListener('error',()=>{$('receipt-original').hidden=true;$('receipt-unavailable').hidden=false;$('receipt-original-link').hidden=true;});
+
 let productsPage=1;
 async function loadProducts(){const data=await api('/api/productos?'+new URLSearchParams({q:$('products-q').value,pagina:productsPage}));$('products-count').textContent=data.total+' productos encontrados';$('products-page').textContent='Página '+productsPage+' de '+Math.max(1,Math.ceil(data.total/30));$('previous-products').disabled=productsPage<=1;$('next-products').disabled=productsPage*30>=data.total;$('products-table').replaceChildren(table(['Código','Producto','Categoría','Unidad','Precio COP'],data.resultados.map(p=>[p.codigo,p.nombre,p.categoria,p.unidad,el('span',money(p.precio_venta),'number')])));}
 $('products-form').addEventListener('submit',e=>{e.preventDefault();productsPage=1;task(()=>busy(e.submitter,loadProducts));});

@@ -137,6 +137,20 @@ def crear_app(data_dir=None):
             if not v:
                 abort(404,description='No existe esa venta.')
             v['vinculos']=[dict(r) for r in db.execute('SELECT v.*,o.naturaleza,o.estado_financiero FROM vinculos v JOIN operaciones o ON o.id=v.operacion_id WHERE venta_id=?',(venta_id,))]
+            for vinculo in v['vinculos']:
+                soportes=[]
+                for row in db.execute('''
+                    SELECT c.id AS comprobante_id,a.id AS archivo_id,a.nombre_original,a.nombre_guardado
+                    FROM soportes_operacion s JOIN comprobantes c ON c.id=s.comprobante_id
+                    JOIN extracciones e ON e.id=c.extraccion_id JOIN archivos_ingresados a ON a.id=e.archivo_id
+                    WHERE s.operacion_id=? ORDER BY c.creado_en,c.id
+                ''',(vinculo['operacion_id'],)):
+                    disponible=(uploads/row['nombre_guardado']).is_file()
+                    soportes.append({'comprobante_id':row['comprobante_id'],'archivo_id':row['archivo_id'],
+                        'nombre_original':row['nombre_original'],'disponible':disponible,
+                        'original_url':'/archivos/'+row['archivo_id'] if disponible else None})
+                vinculo['comprobantes']=soportes
+
         return jsonify(v)
 
     @app.get('/api/productos')
