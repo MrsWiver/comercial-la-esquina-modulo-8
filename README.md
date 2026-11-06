@@ -14,6 +14,16 @@ uv run python -m src.app
 
 Abre http://127.0.0.1:8008. Para detener, usa Ctrl+C. La base existente se conserva y se migra al iniciar; no se reemplaza automáticamente.
 
+## Home y asistente flotante
+
+La página inicial está en `/`; la mesa de trabajo sigue en `/mesa`. La home muestra el catálogo real, búsqueda por nombre/código, filtros por categoría y el asistente abajo a la derecha, adaptable a móvil.
+
+Adjuntar un PNG/JPEG inicia automáticamente su extracción y la conversación con el agente. El bot consulta el soporte y las ventas; si faltan productos o confirmaciones comerciales, los pregunta. La moneda comercial es siempre COP y la fecha de la nueva venta toma por defecto la fecha de la transacción leída del comprobante; solo se pide fecha si no es legible, y se respeta otra fecha indicada por la persona. No muestra pantallas de validación ni llamadas a herramientas. Al tener los datos completos presenta el original y un resumen final con **Confirmar y guardar**.
+
+Esa única acción humana aprueba la versión revisada y permite registrar el comprobante y su operación en una sola transacción. Un fallo revierte ambos; repetir la ejecución devuelve el mismo resultado. Las validaciones, versiones y permisos siguen en el servidor. No existe aprobación del modelo ni guardado comercial automático al adjuntar. Conversación y resultado se recuperan al recargar; «Cancelar» descarta el contexto del soporte y la propuesta sin ejecutar, limpia la conversación e impide que una respuesta tardía la reactive. Está disponible durante el procesamiento. «Otro comprobante» también descarta el contexto anterior. Los registros ya guardados y la evidencia original de auditoría se conservan; volver a adjuntar el mismo archivo inicia una conversación limpia, sin repetir una extracción ya disponible.
+
+La nueva experiencia se verificó con mocks en una base aislada, sin nuevas llamadas reales a OpenAI. La evidencia previa de OCR/agente reales corresponde al recorrido anterior.
+
 ## Configurar IA
 
 ```bash
@@ -35,7 +45,7 @@ Sin clave puedes consultar ventas, catálogo, chat de comandos y los registros q
 
 ## Recorrido completo
 
-1. En **Mesa de trabajo**, carga PNG/JPEG o elige uno de los 12 ejemplos. El archivo persiste; una carga idéntica conserva su ID.
+1. En **Mesa de trabajo** (`/mesa`), carga PNG/JPEG o elige uno de los 12 ejemplos. El archivo persiste; una carga idéntica conserva su ID.
 2. Pulsa **Reconocer soporte con IA**. La lectura validada queda conservada con modelo, fecha, procedencia y hash del prompt.
 3. En **Registros y propuestas**, revisa los campos contra el original visible. Corrige lo necesario y escribe una constancia de revisión. La extracción original permanece inmutable; las correcciones tienen procedencia humana.
 4. Prepara el registro, revisa la propuesta, marca la aprobación y pulsa **Aprobar esta versión**. Después pulsa **Ejecutar versión aprobada**. Puedes volver a consultar el comprobante por ID.
@@ -71,7 +81,9 @@ src/ia.py               cliente Responses API y configuración privada
 src/ejercicios.py       extracción, revisión, propuestas y transacciones
 src/agente.py           bucle de herramientas permitidas
 src/chat.py             chat de comandos determinista
-src/migraciones.py      migraciones v1 → v2 → v3, sin reemplazar datos
+src/migraciones.py      migraciones v1 → v2 → v3 → v4 → v5, sin reemplazar datos
+src/asistente.py        sesiones del bot flotante y recuperación
+static/home.*          diseño y comportamiento de la home
 src/db.py               semilla y consultas SQLite
 templates/ + static/    interfaz sin compilación
 backend/.env.example   plantilla privada, sin clave

@@ -112,6 +112,8 @@ def consultar_extraccion(db, ident):
 
 def consultar_propuesta(db, ident):
     r = fila(db, 'propuestas', ident)
+    if r.get('cancelada'):
+        r['estado']='cancelada'
     r['contenido'] = json.loads(r['contenido'])
     r['resultado'] = json.loads(r['resultado']) if r['resultado'] else None
     return r
@@ -122,8 +124,14 @@ def entero(value, nombre):
     return value
 
 
-def validar_contenido(db, tipo, datos, completo=True):
+def validar_contenido(db, tipo, datos, completo=True, comprobante_provisional=None):
     exigir(isinstance(datos, dict), 'Se requiere contenido de propuesta.')
+    if tipo == 'resolver_soporte':
+        registro = validar_contenido(db, 'registrar_comprobante', datos.get('registro'))
+        exigir(datos.get('tipo_operacion') in ('asociar','crear_venta','adjuntar_soporte'), 'Selecciona una operación comercial.')
+        provisional = {'id': None, 'revision': serializar(registro['revision'])}
+        operacion = validar_contenido(db, datos['tipo_operacion'], datos.get('operacion'), comprobante_provisional=provisional)
+        return {'registro': registro, 'tipo_operacion': datos['tipo_operacion'], 'operacion': operacion}
     if tipo == 'registrar_comprobante':
         ext = consultar_extraccion(db, datos.get('extraccion_id'))
         exigir(not ext['comprobante_id'], 'La extracción ya tiene un comprobante registrado.', 409)
@@ -138,7 +146,7 @@ def validar_contenido(db, tipo, datos, completo=True):
     exigir(tipo in ('asociar', 'crear_venta', 'adjuntar_soporte'), 'Tipo de propuesta no permitido.')
     if not completo:
         return datos
-    c = fila(db, 'comprobantes', datos.get('comprobante_id'))
+    c = comprobante_provisional or fila(db, 'comprobantes', datos.get('comprobante_id'))
     r = json.loads(c['revision'])
     if tipo == 'adjuntar_soporte':
         op = fila(db, 'operaciones', datos.get('operacion_id'))
@@ -202,7 +210,7 @@ def validar_contenido(db, tipo, datos, completo=True):
     return base
 
 
-def preparar_operacion(datos, db):
+def preparar_operacion(datos, db, sesion_id=None):
     exigir(isinstance(datos, dict), 'Propuesta inválida.')
     try:
         exigir(len(serializar(datos)) <= 64000, 'La propuesta supera el límite de tamaño.')
@@ -213,17 +221,20 @@ def preparar_operacion(datos, db):
     exigir(not borrador or tipo in ('asociar', 'crear_venta'), 'Solo una operación comercial puede quedar incompleta.')
     contenido = validar_contenido(db, tipo, datos.get('contenido'), not borrador)
     db.execute('BEGIN IMMEDIATE')
+    if sesion_id:
+        sesion=db.execute('SELECT cancelada FROM sesiones_asistente WHERE id=?',(sesion_id,)).fetchone()
+        exigir(sesion is not None and not sesion['cancelada'], 'Esta operación fue cancelada.',409)
     ident = datos.get('id')
     if ident:
         anterior = consultar_propuesta(db, ident)
-        exigir(anterior['estado'] != 'ejecutada', 'Una propuesta ejecutada es inmutable.', 409)
+        exigir(anterior['estado'] not in ('ejecutada','cancelada'), 'Una propuesta ejecutada es inmutable.', 409)
         exigir(type(datos.get('version')) is int and anterior['version'] == datos['version'], 'La versión cambió. Recarga la propuesta.', 409)
         version = anterior['version'] + 1
         db.execute('UPDATE propuestas SET tipo=?,contenido=?,version=?,estado=?,resultado=NULL WHERE id=?',
                    (tipo, serializar(contenido), version, 'borrador' if borrador else 'pendiente', ident))
     else:
         ident, version = nuevo('PROP'), 1
-        db.execute('INSERT INTO propuestas VALUES(?,?,?,?,?,?,NULL)',
+        db.execute('INSERT INTO propuestas(id,version,tipo,contenido,estado,creado_en,resultado) VALUES(?,?,?,?,?,?,NULL)',
                    (ident, version, tipo, serializar(contenido), 'borrador' if borrador else 'pendiente', ahora()))
     evento(db, ident, 'propuesta_preparada', {'version': version, 'tipo': tipo})
     return consultar_propuesta(db, ident)
@@ -259,40 +270,53 @@ def registrar_operacion_aprobada(datos, db):
            'Falta la aprobación humana de esta versión emitida por el servidor.', 409)
     d = validar_contenido(db, p['tipo'], p['contenido'])
     if p['tipo'] == 'registrar_comprobante':
-        ident = nuevo('CMP')
-        db.execute('INSERT INTO comprobantes(id,extraccion_id,revision,propuesta_id,creado_en) VALUES(?,?,?,?,?)',
-                   (ident, d['extraccion_id'], serializar(d['revision']), p['id'], ahora()))
-        original = consultar_extraccion(db, d['extraccion_id'])['original']
-        for campo, valor in d['revision'].items():
-            if valor != original[campo]:
-                db.execute('INSERT INTO correcciones(comprobante_id,campo,original,corregido,origen,motivo) VALUES(?,?,?,?,?,?)',
-                           (ident, campo, serializar(original[campo]), serializar(valor), 'revision_humana', d['motivo']))
-        resultado = {'comprobante_id': ident}
-    elif p['tipo'] == 'adjuntar_soporte':
-        db.execute('INSERT INTO soportes_operacion VALUES(?,?)', (d['comprobante_id'], d['operacion_id']))
-        resultado = {'operacion_id': d['operacion_id'], 'comprobante_id': d['comprobante_id']}
+        resultado = {'comprobante_id': guardar_comprobante(db, d, p['id'])}
+    elif p['tipo'] == 'resolver_soporte':
+        cid = guardar_comprobante(db, d['registro'], p['id'])
+        operacion = {**d['operacion'], 'comprobante_id': cid}
+        resultado = {**guardar_operacion(db, d['tipo_operacion'], operacion, p['id']), 'comprobante_id': cid}
     else:
-        c = fila(db, 'comprobantes', d['comprobante_id'])
-        r = json.loads(c['revision'])
-        operacion_id = nuevo('OP')
-        db.execute('INSERT INTO operaciones(id,naturaleza,monto,moneda,referencias) VALUES(?,?,?,?,?)',
-                   (operacion_id, d['naturaleza'], d['monto'], 'COP', serializar(r['references'])))
-        db.execute('INSERT INTO soportes_operacion VALUES(?,?)', (c['id'], operacion_id))
-        venta_id = d.get('venta_id')
-        if p['tipo'] == 'crear_venta':
-            venta_id = nuevo('V')
-            db.execute('INSERT INTO ventas(id,fecha_comercial,cliente,factura_externa,origen) VALUES(?,?,?,?,?)',
-                       (venta_id, d['fecha_comercial'], d['cliente'], d['factura_externa'], 'registro_humano'))
-            db.executemany('INSERT INTO venta_lineas(venta_id,producto_codigo,cantidad,precio_unitario) VALUES(?,?,?,?)',
-                           [(venta_id, l['producto_codigo'], l['cantidad'], l['precio_unitario']) for l in d['lineas']])
-        vinculo_id = nuevo('VIN')
-        db.execute('INSERT INTO vinculos VALUES(?,?,?,?,?)', (vinculo_id, operacion_id, venta_id, d['importe_aplicado'], p['id']))
-        resultado = {'venta_id': venta_id, 'operacion_id': operacion_id, 'vinculo_id': vinculo_id,
-                     'importe_aplicado': d['importe_aplicado'], 'estado_financiero': 'no_verificado'}
+        resultado = guardar_operacion(db, p['tipo'], d, p['id'])
     db.execute('INSERT INTO ejecuciones VALUES(?,?,?,?)', (p['id'] + ':' + str(p['version']), p['id'], serializar(resultado), ahora()))
     db.execute("UPDATE propuestas SET estado='ejecutada',resultado=? WHERE id=?", (serializar(resultado), p['id']))
     evento(db, p['id'], 'ejecucion', resultado)
     return resultado
+
+
+def guardar_comprobante(db, d, propuesta_id):
+    """Solo se invoca después de verificar aprobación, dentro de la misma transacción."""
+    ident = nuevo('CMP')
+    db.execute('INSERT INTO comprobantes(id,extraccion_id,revision,propuesta_id,creado_en) VALUES(?,?,?,?,?)',
+               (ident, d['extraccion_id'], serializar(d['revision']), propuesta_id, ahora()))
+    original = consultar_extraccion(db, d['extraccion_id'])['original']
+    for campo, valor in d['revision'].items():
+        if valor != original[campo]:
+            db.execute('INSERT INTO correcciones(comprobante_id,campo,original,corregido,origen,motivo) VALUES(?,?,?,?,?,?)',
+                       (ident, campo, serializar(original[campo]), serializar(valor), 'revision_humana', d['motivo']))
+    return ident
+
+
+def guardar_operacion(db, tipo, d, propuesta_id):
+    if tipo == 'adjuntar_soporte':
+        db.execute('INSERT INTO soportes_operacion VALUES(?,?)', (d['comprobante_id'], d['operacion_id']))
+        return {'operacion_id': d['operacion_id'], 'comprobante_id': d['comprobante_id']}
+    c = fila(db, 'comprobantes', d['comprobante_id'])
+    r = json.loads(c['revision'])
+    operacion_id = nuevo('OP')
+    db.execute('INSERT INTO operaciones(id,naturaleza,monto,moneda,referencias) VALUES(?,?,?,?,?)',
+               (operacion_id, d['naturaleza'], d['monto'], 'COP', serializar(r['references'])))
+    db.execute('INSERT INTO soportes_operacion VALUES(?,?)', (c['id'], operacion_id))
+    venta_id = d.get('venta_id')
+    if tipo == 'crear_venta':
+        venta_id = nuevo('V')
+        db.execute('INSERT INTO ventas(id,fecha_comercial,cliente,factura_externa,origen) VALUES(?,?,?,?,?)',
+                   (venta_id, d['fecha_comercial'], d['cliente'], d['factura_externa'], 'registro_humano'))
+        db.executemany('INSERT INTO venta_lineas(venta_id,producto_codigo,cantidad,precio_unitario) VALUES(?,?,?,?)',
+                       [(venta_id, l['producto_codigo'], l['cantidad'], l['precio_unitario']) for l in d['lineas']])
+    vinculo_id = nuevo('VIN')
+    db.execute('INSERT INTO vinculos VALUES(?,?,?,?,?)', (vinculo_id, operacion_id, venta_id, d['importe_aplicado'], propuesta_id))
+    return {'venta_id': venta_id, 'operacion_id': operacion_id, 'vinculo_id': vinculo_id,
+            'importe_aplicado': d['importe_aplicado'], 'estado_financiero': 'no_verificado'}
 
 
 def consultar_comprobante(db, ident):
