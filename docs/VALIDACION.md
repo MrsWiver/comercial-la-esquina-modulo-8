@@ -1,3 +1,45 @@
+# Comprobantes desde el detalle de venta · 6 de noviembre de 2026
+
+`uv run pytest -q`: **85 pruebas aprobadas**. El detalle de venta incluye los comprobantes realmente vinculados a cada operación, con nombre de archivo, vista previa, apertura del original y acceso a la revisión. No se infieren relaciones por monto ni fecha. Se verifica un soporte por venta, varios soportes para la misma operación y ausencia del original en disco sin fingir disponibilidad. La respuesta pública no expone nombres internos de almacenamiento.
+
+Recorrido de lectura comprobado en la interfaz de la base existente: Ventas → V-002 → Comprobantes asociados → Ver comprobante; se abrió comprobante_013.png, vinculado a su cobro de 22000. El diálogo conserva el detalle de venta debajo y permite abrir el original en otra pestaña. No se modificaron asociaciones, ventas ni datos y no se hicieron llamadas al modelo.
+
+---
+
+# Cancelación de soporte u operación · 6 de noviembre de 2026
+
+`uv run pytest -q`: **83 pruebas aprobadas**. Se verifican cancelación idempotente de una propuesta previamente aprobada, invalidación de versión y aprobación, rechazo de ejecución/edición posterior, limpieza de mensajes y bloqueo, nueva conversación limpia con el mismo archivo y conservación de operaciones ya ejecutadas. También se prueban cancelación antes de cargar, durante OCR y mientras responde el agente: no se crean sesión/propuesta tardías ni se restauran mensajes. El endpoint exige token local.
+
+Recorrido visual con mocks y SQLite temporal en localhost:8020: cargar 054, aportar líneas ficticias, obtener resumen pendiente, pulsar Cancelar, observar desaparición de adjunto/resumen y confirmación de cancelación, recargar y comprobar conversación inicial vacía. No se ejecutó la propuesta. No hubo nuevas llamadas reales a OpenAI ni cancelaciones sobre datos comerciales del usuario.
+
+La evidencia y extracciones originales no se eliminan físicamente; se descarta su contexto en el bot. La migración v5 conserva datos previos. Las peticiones externas ya enviadas pueden concluir, pero la cancelación impide reactivar contexto, preparar operaciones o guardar mensajes tardíos. Si una operación ya terminó de guardarse, se informa y se conserva.
+
+---
+
+# Valores comerciales predeterminados · 6 de noviembre de 2026
+
+Por instrucción del usuario, COP es la moneda fija del negocio y la fecha documental se usa como fecha comercial predeterminada al crear una venta. El agente deja de solicitar esos datos cuando ya están disponibles. Las herramientas aplican los valores en servidor, tanto para el chat de la mesa como para el bot de la home; se conserva la extracción original y currency_observed=null si la moneda no era explícita. Una fecha comercial indicada por el usuario prevalece, y una fecha ilegible requiere consulta. Una moneda extranjera explícita no se convierte silenciosamente.
+
+`uv run pytest -q`: **75 pruebas aprobadas**. Regresiones nuevas verifican valores ausentes, conservación del OCR, fecha explícita distinta, ausencia de fecha, rechazo de moneda extranjera y contexto del soporte separado de los valores comerciales.
+
+Recorrido de interfaz con mocks en una base aislada: adjuntar 054, respuesta sin pedir moneda ni fecha, aportar únicamente confirmación de venta faltante/operación única y líneas ficticias, y obtener resumen pendiente con COP y fecha 2026-09-11. La herramienta simulada omitió moneda y fecha en su preparación: el servidor las completó. No se confirmó ni ejecutó la propuesta, ni se hicieron llamadas reales adicionales a OpenAI. La conversación previa del usuario no se reescribió.
+
+---
+
+# Home y asistente flotante · 6 de noviembre de 2026
+
+`uv run pytest -q`: **70 pruebas aprobadas**. JavaScript de home y mesa verificado con node --check; git diff --check sin errores.
+
+Nueva ruta `/` con catálogo real y bot flotante; la mesa permanece en `/mesa`. Pruebas nuevas cubren filtros comerciales, reutilización de extracción/sesión, persistencia del chat, herramientas acotadas a la sesión, rechazo de autoaprobación, fallo de API sin éxito ficticio, recuperación del bloqueo, confirmación requerida y ejecución compuesta idempotente. Una falla inyectada al escribir el vínculo revierte también comprobante, operación y venta nueva. Se rechazan propuestas completas sin datos/confirmaciones comerciales válidos.
+
+QA de interfaz con API simulada en una base temporal, servidor localhost:8020. Se eligió el ejemplo 054: adjuntar inició extracción/conversación; el bot pidió datos faltantes; con líneas ficticias FER-0001 y FER-0222 mostró resumen de 148000. Una sola confirmación guardó comprobante, venta, operación y vínculo en la base temporal y mostró el resultado final. Al recargar se recuperó conversación y resultado. Las respuestas indicaban expresamente «Prueba simulada»; no son una nueva extracción real.
+
+Se observó la home en escritorio y el bot a 375 × 812. Se corrigió su ancho para quedar dentro del área visible con barras de desplazamiento. Original accesible desde el chat, resultado sin paneles de validación técnica, foco visible, teclado y estilos con reducción de movimiento. No se hizo auditoría completa con lector de pantalla ni prueba en teléfono físico. La interfaz real quedó abierta sin enviar nuevos soportes a OpenAI ni ejecutar operaciones comerciales en la base de trabajo.
+
+La migración v4 conserva datos previos y añade sesiones. Los cambios en la transacción compuesta no eliminan revisión, aprobación humana en servidor, versión/hash, límites monetarios ni idempotencia. La experiencia nueva fue probada con mocks; las pruebas reales previas del OCR y agente no se presentan como validación real integral de este flujo nuevo.
+
+---
+
 # Corrección y repetición real del agente · 6 de noviembre de 2026
 
 Se aclararon las instrucciones y el contrato de la herramienta preparar: pendiente significa esperar aprobación, no autorización. Además, la herramienta del agente valida el contenido en servidor; si es completo y válido lo prepara como pendiente incluso si el modelo envía borrador=true. Los datos incompletos o no válidos siguen en borrador cuando se solicitó conservarlos. La acción manual Guardar borrador mantiene su comportamiento. Nunca se genera aprobación ni ejecución por esta normalización.

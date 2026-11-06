@@ -246,6 +246,7 @@ def test_duplicate_reference_requires_attachment_without_new_money(client,monkey
     assert p2.status_code==200,p2.json
     aprobar_ejecutar(client,p2.json)
     assert len(client.get('/api/registros').json['operaciones'])==1
+    assert len(client.get('/api/ventas/V-003').json['vinculos'][0]['comprobantes'])==2
     assert client.get('/api/comprobantes/'+c2).json['operaciones'][0]['id']==result['operacion_id']
     assert client.get('/api/comprobantes/'+c1).json['revision']['references']['transfer_reference']=='000123'
 
@@ -294,7 +295,7 @@ def test_migration_preserves_existing_chat_and_files(tmp_path):
         assert db.execute('PRAGMA user_version').fetchone()[0]==1
     app=crear_app(tmp_path)
     with conectar(base) as db:
-        assert db.execute('PRAGMA user_version').fetchone()[0]==3
+        assert db.execute('PRAGMA user_version').fetchone()[0]==5
         assert db.execute('SELECT origen FROM mensajes_chat').fetchone()[0]=='determinista'
     assert app.test_client().get('/api/chat').json[0]['texto']=='historia previa'
 
@@ -320,7 +321,7 @@ def test_delivery_is_clean_with_twelve_authorized_examples(tmp_path):
         z.extract('proyecto-inicial/datos/practica/negocio.sqlite3',tmp_path)
     with sqlite3.connect(tmp_path/'proyecto-inicial/datos/practica/negocio.sqlite3') as db:
         assert db.execute('SELECT COUNT(*) FROM ventas').fetchone()[0]==8
-        for tabla in ('archivos_ingresados','mensajes_chat','extracciones','comprobantes','propuestas','operaciones','vinculos'):
+        for tabla in ('archivos_ingresados','mensajes_chat','extracciones','comprobantes','propuestas','operaciones','vinculos','sesiones_asistente','solicitudes_asistente'):
             assert db.execute('SELECT COUNT(*) FROM '+tabla).fetchone()[0]==0
 
 
@@ -350,7 +351,7 @@ def test_agent_complete_first_preparation_is_pending_without_approval(app,client
 
 
 @pytest.mark.parametrize('cambio',[{'lineas':[]},{'confirmacion_venta_faltante':False},
-    {'confirmacion_operacion_unica':False},{'moneda_confirmada':None},
+    {'confirmacion_operacion_unica':False},
     {'lineas':[{'producto_codigo':'FER-0001','cantidad':1,'precio_unitario':1}]}])
 def test_agent_incomplete_or_invalid_remains_draft(app,client,monkeypatch,cambio):
     monkeypatch.setattr(ia,'reconocer',lambda *a:lectura(148000))
@@ -367,3 +368,15 @@ def test_manual_complete_draft_is_preserved(client,monkeypatch):
     cid=comprobante(client)
     p=post(client,'/api/propuestas',{'tipo':'crear_venta','contenido':datos_venta_054(cid),'borrador':True})
     assert p.status_code==200 and p.json['estado']=='borrador'
+
+
+def test_agent_business_defaults_without_reconfirming_currency_or_date(app,client,monkeypatch):
+    monkeypatch.setattr(ia,'reconocer',lambda *a:lectura(148000))
+    cid=comprobante(client);d=datos_venta_054(cid)
+    d.pop('moneda_confirmada');d.pop('fecha_comercial')
+    with conectar(app.config['DB_PATH']) as db:
+        p=agente.ejecutar_herramienta(db,'preparar',{'tipo':'crear_venta',
+            'contenido_json':json.dumps(d),'borrador':False,'id':None,'version':None})
+    assert p['estado']=='pendiente'
+    assert p['contenido']['moneda_confirmada']=='COP'
+    assert p['contenido']['fecha_comercial']=='2026-11-06'

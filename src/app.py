@@ -17,7 +17,7 @@ from PIL import Image, UnidentifiedImageError
 from werkzeug.exceptions import HTTPException
 from werkzeug.utils import secure_filename
 
-from . import ejercicios, ia, agente
+from . import ejercicios, ia, agente, asistente
 from .migraciones import migrar
 from .chat import responder
 from .db import ROOT, buscar_ventas, conectar, construir, consultar_venta
@@ -103,6 +103,10 @@ def crear_app(data_dir=None):
 
     @app.get('/')
     def inicio():
+        return render_template('home.html',csrf_token=token)
+
+    @app.get('/mesa')
+    def mesa_trabajo():
         return render_template('index.html',csrf_token=token)
 
     @app.get('/api/resumen')
@@ -133,19 +137,34 @@ def crear_app(data_dir=None):
             if not v:
                 abort(404,description='No existe esa venta.')
             v['vinculos']=[dict(r) for r in db.execute('SELECT v.*,o.naturaleza,o.estado_financiero FROM vinculos v JOIN operaciones o ON o.id=v.operacion_id WHERE venta_id=?',(venta_id,))]
+            for vinculo in v['vinculos']:
+                soportes=[]
+                for row in db.execute('''
+                    SELECT c.id AS comprobante_id,a.id AS archivo_id,a.nombre_original,a.nombre_guardado
+                    FROM soportes_operacion s JOIN comprobantes c ON c.id=s.comprobante_id
+                    JOIN extracciones e ON e.id=c.extraccion_id JOIN archivos_ingresados a ON a.id=e.archivo_id
+                    WHERE s.operacion_id=? ORDER BY c.creado_en,c.id
+                ''',(vinculo['operacion_id'],)):
+                    disponible=(uploads/row['nombre_guardado']).is_file()
+                    soportes.append({'comprobante_id':row['comprobante_id'],'archivo_id':row['archivo_id'],
+                        'nombre_original':row['nombre_original'],'disponible':disponible,
+                        'original_url':'/archivos/'+row['archivo_id'] if disponible else None})
+                vinculo['comprobantes']=soportes
+
         return jsonify(v)
 
     @app.get('/api/productos')
     def productos():
         q=request.args.get('q','')[:150]
+        categoria=request.args.get('categoria','')[:100]
         pagina=entero(request.args.get('pagina','1'),'La página',10000)
         if pagina<1:
             abort(400,description='La página empieza en 1.')
         with conectar(base) as db:
             term=f'%{q}%'
-            total=db.execute('SELECT COUNT(*) FROM productos WHERE codigo LIKE ? OR nombre LIKE ?',(term,term)).fetchone()[0]
-            filas=db.execute('SELECT codigo,nombre,categoria,unidad,precio_venta FROM productos WHERE codigo LIKE ? OR nombre LIKE ? ORDER BY codigo LIMIT 30 OFFSET ?',
-                             (term,term,(pagina-1)*30)).fetchall()
+            total=db.execute('SELECT COUNT(*) FROM productos WHERE (codigo LIKE ? OR nombre LIKE ?) AND (?=\'\' OR categoria=?)',(term,term,categoria,categoria)).fetchone()[0]
+            filas=db.execute('SELECT codigo,nombre,categoria,unidad,precio_venta FROM productos WHERE (codigo LIKE ? OR nombre LIKE ?) AND (?=\'\' OR categoria=?) ORDER BY codigo LIMIT 30 OFFSET ?',
+                             (term,term,categoria,categoria,(pagina-1)*30)).fetchall()
             return jsonify(total=total,pagina=pagina,resultados=[dict(r) for r in filas])
 
     @app.get('/api/casos')
@@ -244,6 +263,41 @@ def crear_app(data_dir=None):
             db.executemany('INSERT INTO mensajes_chat(rol,texto,creado_en) VALUES(?,?,?)',
                            [('usuario',texto,ahora()),('asistente',respuesta,ahora())])
         return jsonify(respuesta=respuesta)
+
+    @app.post('/api/asistente/iniciar/<archivo_id>')
+    def iniciar_asistente(archivo_id):
+        solicitud_id=cuerpo().get('solicitud_id')
+        with conectar(base) as db:
+            archivo=db.execute('SELECT * FROM archivos_ingresados WHERE id=?',(archivo_id,)).fetchone()
+            if not archivo:
+                abort(404,description='Adjunta primero un soporte.')
+            asistente.solicitud(db,solicitud_id,archivo_id)
+            ext=ejercicios.extraer_soporte(dict(archivo),db,origen=app.config.get('OCR_ORIGEN','api_real'))
+            db.commit()
+            asistente.solicitud(db,solicitud_id,archivo_id)
+            db.execute('BEGIN IMMEDIATE')
+            if solicitud_id:
+                row=db.execute('SELECT cancelada FROM solicitudes_asistente WHERE id=?',(solicitud_id,)).fetchone()
+                ejercicios.exigir(not row['cancelada'],'Esta operación fue cancelada.',409)
+            resultado=asistente.iniciar(db,ext)
+            if solicitud_id:
+                db.execute('UPDATE solicitudes_asistente SET sesion_id=? WHERE id=?',(resultado['id'],solicitud_id))
+            return jsonify(resultado)
+
+    @app.post('/api/asistente/cancelar')
+    def cancelar_asistente():
+        with conectar(base) as db:
+            return jsonify(asistente.cancelar(db,cuerpo()))
+
+    @app.get('/api/asistente/<ident>')
+    def consultar_asistente(ident):
+        with conectar(base) as db:
+            return jsonify(asistente.consultar(db,ident))
+
+    @app.post('/api/asistente/<ident>/mensaje')
+    def mensaje_asistente(ident):
+        with conectar(base) as db:
+            return jsonify(asistente.conversar(db,ident,cuerpo().get('texto')))
 
     @app.get('/api/configuracion')
     def configuracion_publica():

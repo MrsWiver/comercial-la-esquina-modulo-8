@@ -54,7 +54,40 @@ function table(headers,rows){const t=el('table'),head=el('thead'),hr=el('tr'),bo
 async function loadSales(){const params=new URLSearchParams({q:$('sales-q').value,importe:$('sales-amount').value,fecha:$('sales-date').value});const rows=await api('/api/ventas?'+params);$('sales-count').textContent=rows.length+' ventas encontradas'+(rows.length?'':'. Prueba otros criterios: no encontrar un total exacto no demuestra que falte la venta.');$('sales-table').replaceChildren(table(['Venta','Fecha comercial','Cliente','Total COP','Detalle'],rows.map(v=>{const b=el('button','Abrir','table-action');b.setAttribute('aria-label','Abrir venta '+v.id);b.addEventListener('click',()=>task(()=>saleDetail(v.id)));return [v.id,v.fecha_comercial,v.cliente||'Sin cliente',el('span',money(v.total),'number'),b];})));}
 $('sales-form').addEventListener('submit',e=>{e.preventDefault();task(()=>busy(e.submitter,loadSales));});
 $('clear-sales').addEventListener('click',()=>{$('sales-form').reset();task(loadSales);});
-async function saleDetail(id){const v=await api('/api/ventas/'+id),content=el('div'),meta=el('div',undefined,'detail-meta');for(const [label,value]of [['Fecha comercial',v.fecha_comercial],['Cliente',v.cliente||'Sin cliente'],['Factura externa',v.factura_externa||'No informada'],['Origen',v.origen]]){const n=el('div');n.append(el('span',label),document.createTextNode(value));meta.append(n);}content.append(meta);const wrap=el('div',undefined,'table-wrap');wrap.append(table(['Producto','Cantidad','Precio COP','Subtotal COP'],v.lineas.map(l=>[l.producto_codigo+' · '+l.nombre,l.cantidad,money(l.precio_unitario),money(l.subtotal)])));content.append(wrap,el('p','Total '+money(v.total)+' COP','total'),el('p',v.vinculos.length?v.vinculos.map(x=>x.id+' · '+money(x.importe)+' · '+x.naturaleza+' · '+x.estado_financiero).join(' | '):'Sin vínculos comerciales. La revisión de una imagen no verifica el abono bancario.','info'));openDialog('Venta '+id,content);}
+async function saleDetail(id){
+ const v=await api('/api/ventas/'+id),content=el('div'),meta=el('div',undefined,'detail-meta');
+ for(const [label,value]of [['Fecha comercial',v.fecha_comercial],['Cliente',v.cliente||'Sin cliente'],['Factura externa',v.factura_externa||'No informada'],['Origen',v.origen]]){const n=el('div');n.append(el('span',label),document.createTextNode(value));meta.append(n);}
+ content.append(meta);const wrap=el('div',undefined,'table-wrap');
+ wrap.append(table(['Producto','Cantidad','Precio COP','Subtotal COP'],v.lineas.map(l=>[l.producto_codigo+' · '+l.nombre,l.cantidad,money(l.precio_unitario),money(l.subtotal)])));
+ content.append(wrap,el('p','Total '+money(v.total)+' COP','total'));
+ if(!v.vinculos.length)content.append(el('p','Esta venta todavía no tiene comprobantes asociados.','info'));
+ else {
+  content.append(el('h3','Comprobantes asociados'));
+  for(const vinculo of v.vinculos){
+   const group=el('section',undefined,'sale-support-group');
+   group.append(el('p',money(vinculo.importe)+' aplicados · '+(vinculo.naturaleza==='financiacion'?'Financiación':'Cobro reportado')+' · Recepción bancaria sin verificar','info'));
+   const grid=el('div',undefined,'sale-support-grid');
+   for(const soporte of vinculo.comprobantes||[]){
+    const card=el('article',undefined,'sale-support-card');
+    if(soporte.disponible){
+     const see=el('button',undefined,'support-preview'),img=el('img');img.src=soporte.original_url;img.alt='Vista previa de '+soporte.nombre_original;img.loading='lazy';see.type='button';see.setAttribute('aria-label','Ver comprobante '+soporte.nombre_original);see.append(img);see.addEventListener('click',()=>receiptDialog(soporte));card.append(see);
+     const open=el('button','Ver comprobante','secondary');open.type='button';open.addEventListener('click',()=>receiptDialog(soporte));card.append(open);
+    }else card.append(el('p','Original no disponible. Recupera la evidencia desde un respaldo.','error'));
+    card.append(el('strong',soporte.nombre_original),el('small',soporte.comprobante_id));
+    const reading=el('button','Consultar datos revisados','table-action');reading.type='button';reading.addEventListener('click',()=>task(async()=>{$('detail-dialog').close();page('registros');await showReceipt(soporte.comprobante_id);}));card.append(reading);grid.append(card);
+   }
+   group.append(grid);content.append(group);
+  }
+ }
+ openDialog('Venta '+id,content);
+}
+function receiptDialog(soporte){
+ $('receipt-title').textContent=soporte.nombre_original;$('receipt-unavailable').hidden=true;$('receipt-original').hidden=false;$('receipt-original-link').hidden=false;
+ $('receipt-original').src=soporte.original_url;$('receipt-original-link').href=soporte.original_url;$('receipt-dialog').showModal();
+}
+$('close-receipt').addEventListener('click',()=>$('receipt-dialog').close());
+$('receipt-original').addEventListener('error',()=>{$('receipt-original').hidden=true;$('receipt-unavailable').hidden=false;$('receipt-original-link').hidden=true;});
+
 let productsPage=1;
 async function loadProducts(){const data=await api('/api/productos?'+new URLSearchParams({q:$('products-q').value,pagina:productsPage}));$('products-count').textContent=data.total+' productos encontrados';$('products-page').textContent='Página '+productsPage+' de '+Math.max(1,Math.ceil(data.total/30));$('previous-products').disabled=productsPage<=1;$('next-products').disabled=productsPage*30>=data.total;$('products-table').replaceChildren(table(['Código','Producto','Categoría','Unidad','Precio COP'],data.resultados.map(p=>[p.codigo,p.nombre,p.categoria,p.unidad,el('span',money(p.precio_venta),'number')])));}
 $('products-form').addEventListener('submit',e=>{e.preventDefault();productsPage=1;task(()=>busy(e.submitter,loadProducts));});
@@ -129,14 +162,15 @@ async function operationForm(c,existing=null){
  const sale=field(panel,'Venta seleccionada (ID exacto)',existing?.contenido.venta_id||'');
  panel.append(actionButton('Buscar candidatos',async()=>{const rows=await api('/api/ventas?'+new URLSearchParams({q:search.value,importe:amount.value}));results.replaceChildren(el('p',rows.length+' candidatos. Selecciona con el comerciante; el monto solo es un indicio.'));rows.forEach(v=>results.append(actionButton(v.id+' · '+v.fecha_comercial+' · '+(v.cliente||'Sin cliente')+' · '+money(v.total),async()=>{sale.value=v.id;await saleDetail(v.id);})));}),results);
  const create=check(panel,'El comerciante confirma que falta registrar la venta. Crear una venta nueva.');
- const fecha=field(panel,'Fecha comercial (para venta nueva)',existing?.contenido.fecha_comercial||'','date'),cliente=field(panel,'Cliente confirmado (opcional)',existing?.contenido.cliente||''),factura=field(panel,'Factura externa confirmada (opcional)',existing?.contenido.factura_externa||'');
+ const fecha=field(panel,'Fecha comercial (para venta nueva)',existing?.contenido.fecha_comercial||c.revision.document_date||'','date'),cliente=field(panel,'Cliente confirmado (opcional)',existing?.contenido.cliente||''),factura=field(panel,'Factura externa confirmada (opcional)',existing?.contenido.factura_externa||'');
  panel.append(el('h3','Productos para la venta nueva'));const catalogQuery=field(panel,'Buscar producto por nombre o código'),catalogResults=el('div'),lineList=el('div');let lines=existing?.contenido.lineas?structuredClone(existing.contenido.lineas):[];
  function renderLines(){lineList.replaceChildren();for(const [index,l]of lines.entries()){const row=el('div',undefined,'line-edit');row.append(el('span',l.producto_codigo+' · '+money(l.precio_unitario)));const qty=field(row,'Cantidad',l.cantidad,'number');qty.min='1';qty.addEventListener('change',()=>{l.cantidad=Number(qty.value);renderLines();});row.append(actionButton('Quitar',async()=>{lines.splice(index,1);renderLines();}));lineList.append(row);}lineList.append(el('p','Total orientativo '+money(lines.reduce((n,l)=>n+l.cantidad*l.precio_unitario,0))+'. El servidor volverá a calcularlo.'));}
  panel.append(actionButton('Consultar catálogo',async()=>{const data=await api('/api/productos?'+new URLSearchParams({q:catalogQuery.value}));catalogResults.replaceChildren();data.resultados.forEach(p=>catalogResults.append(actionButton(p.codigo+' · '+p.nombre+' · '+money(p.precio_venta),async()=>{if(lines.some(l=>l.producto_codigo===p.codigo))throw new Error('Ya agregaste ese producto. Cambia su cantidad.');lines.push({producto_codigo:p.codigo,cantidad:1,precio_unitario:p.precio_venta});renderLines();})));}),catalogResults,lineList);renderLines();
  const aplicado=field(panel,'Importe que se aplicará a la venta COP',existing?.contenido.importe_aplicado||c.revision.total_amount,'number');
- const cop=check(panel,'Confirmo que la moneda comercial es COP.'),unique=check(panel,'Comparé referencias y operaciones existentes. Este soporte describe una operación aún no registrada.'),review=check(panel,'Confirmé con el comerciante la venta, los productos, cantidades y precios que corresponden.');
+ const cop=check(panel,'Moneda del negocio: COP.'),unique=check(panel,'Comparé referencias y operaciones existentes. Este soporte describe una operación aún no registrada.'),review=check(panel,'Confirmé con el comerciante la venta, los productos, cantidades y precios que corresponden.');
  panel.append(el('p','Si es otra foto de una operación existente, adjúntala sin crear dinero adicional.','info'));
  const opId=field(panel,'ID de operación existente (solo para adjuntar)'),same=check(panel,'Confirmo que se trata de la misma operación y revisé sus referencias.');
+ cop.checked=true;cop.disabled=true;
  function payload(draft){return {tipo:create.checked?'crear_venta':'asociar',borrador:draft,...(existing?{id:existing.id,version:existing.version}:{}),contenido:{comprobante_id:c.id,venta_id:sale.value,moneda_confirmada:cop.checked?'COP':null,confirmacion_operacion_unica:unique.checked,confirmacion_venta_faltante:create.checked,fecha_comercial:fecha.value,cliente:cliente.value||null,factura_externa:factura.value||null,lineas:lines,importe_aplicado:aplicado.value===''?null:Number(aplicado.value)}};}
  create.checked=existing?.tipo==='crear_venta';
  panel.append(actionButton('Guardar borrador incompleto',async()=>{const p=await post('/api/propuestas',payload(true));await loadRecords();await showProposal(p.id);}),actionButton('Preparar propuesta comercial',async()=>{if(!review.checked)throw new Error('Confirma los datos comerciales con la persona.');const p=await post('/api/propuestas',payload(false));await loadRecords();await showProposal(p.id);}),actionButton('Proponer adjuntar a operación existente',async()=>{const p=await post('/api/propuestas',{tipo:'adjuntar_soporte',contenido:{comprobante_id:c.id,operacion_id:opId.value,confirmacion_mismo_documento:same.checked}});await loadRecords();await showProposal(p.id);}));panel.scrollIntoView({block:'start'});
@@ -157,6 +191,7 @@ async function showProposal(id){
 function renderRevision(parent,r){const wrap=el('div',undefined,'table-wrap');wrap.append(table(['Campo revisado','Valor'],Object.entries(labels).map(([k,label])=>[label,r[k]===null?'No visible / no informado':String(r[k])])));parent.append(wrap);const refs=Object.entries(r.references).filter(([,v])=>v!==null);parent.append(el('p',refs.length?'Referencias: '+refs.map(([k,v])=>k+': '+v).join(' · '):'Sin referencias visibles.'));if(r.warnings.length)parent.append(el('p',r.warnings.join(' · '),'info'));}
 function renderProposal(parent,p){
  const d=p.contenido;
+ if(p.tipo==='resolver_soporte'){parent.append(el('p','Guardar comprobante y operación con una sola confirmación.','info'));renderRevision(parent,d.registro.revision);renderProposal(parent,{tipo:d.tipo_operacion,contenido:d.operacion});return;}
  if(p.tipo==='registrar_comprobante'){parent.append(el('p','Registrar un comprobante revisado. No genera un pago ni un vínculo comercial.','info'));renderRevision(parent,d.revision);parent.append(el('p','Constancia: '+d.motivo));return;}
  if(p.tipo==='adjuntar_soporte'){parent.append(el('p','Adjuntar '+d.comprobante_id+' a '+d.operacion_id+'. No se creará una operación adicional.','info'));return;}
  const rows=[['Comprobante',d.comprobante_id],['Naturaleza',d.naturaleza||'Por completar'],['Moneda',d.moneda_confirmada||'Por confirmar'],['Importe aplicado',d.importe_aplicado==null?'Pendiente':money(d.importe_aplicado)],['Venta',d.venta_id||'Nueva venta'],['Fecha comercial',d.fecha_comercial||'Consultar venta seleccionada'],['Cliente',d.cliente||'No informado'],['Factura externa',d.factura_externa||'No informada']];parent.append(table(['Dato comercial','Valor'],rows));

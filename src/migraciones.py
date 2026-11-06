@@ -49,7 +49,7 @@ DDL = [
 def migrar(db):
     db.execute('BEGIN IMMEDIATE')
     version = db.execute('PRAGMA user_version').fetchone()[0]
-    if version > 3:
+    if version > 5:
         raise RuntimeError('Base creada por una versión posterior de la aplicación.')
     if version == 1:
         for sql in DDL:
@@ -59,4 +59,20 @@ def migrar(db):
     if version == 2:
         db.execute("ALTER TABLE mensajes_chat ADD COLUMN origen TEXT NOT NULL DEFAULT 'determinista' CHECK(origen IN ('determinista','agente_ia'))")
         db.execute('PRAGMA user_version=3')
+        version=3
+    if version == 3:
+        db.execute('''CREATE TABLE sesiones_asistente (
+            id TEXT PRIMARY KEY, extraccion_id TEXT NOT NULL UNIQUE REFERENCES extracciones(id),
+            mensajes TEXT NOT NULL DEFAULT '[]', propuesta_id TEXT REFERENCES propuestas(id),
+            ocupado INTEGER NOT NULL DEFAULT 0, iniciado_en REAL)''')
+        db.execute('PRAGMA user_version=4')
+        version=4
+    if version == 4:
+        db.execute('ALTER TABLE sesiones_asistente ADD COLUMN cancelada INTEGER NOT NULL DEFAULT 0')
+        db.execute('ALTER TABLE propuestas ADD COLUMN cancelada INTEGER NOT NULL DEFAULT 0')
+        db.execute('''CREATE TABLE solicitudes_asistente (
+            id TEXT PRIMARY KEY, archivo_id TEXT REFERENCES archivos_ingresados(id),
+            sesion_id TEXT REFERENCES sesiones_asistente(id) ON DELETE SET NULL,
+            cancelada INTEGER NOT NULL DEFAULT 0)''')
+        db.execute('PRAGMA user_version=5')
     db.commit()
