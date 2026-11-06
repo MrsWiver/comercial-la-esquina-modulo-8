@@ -3,7 +3,12 @@ name = "la-esquina-modulo-8"
 version = "0.1.0"
 description = "Base estudiantil local: comprobantes y ventas de Comercial La Esquina"
 requires-python = ">=3.11"
-dependencies = ["flask==3.1.2", "pillow==12.0.0"]
+dependencies = [
+    "flask==3.1.2",
+    "jsonschema==4.26.0",
+    "pillow==12.0.0",
+    "python-dotenv==1.2.1",
+]
 
 [dependency-groups]
 dev = ["pytest==9.0.2"]

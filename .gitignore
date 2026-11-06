@@ -12,3 +12,7 @@ datos/respaldos/
 
 # Metadatos de iconos del Finder (Icon seguido de un carácter).
 Icon?
+
+backend/.env
+backend/.env.*
+!backend/.env.example

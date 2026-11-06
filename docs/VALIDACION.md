@@ -1,3 +1,98 @@
+# Corrección y repetición real del agente · 6 de noviembre de 2026
+
+Se aclararon las instrucciones y el contrato de la herramienta preparar: pendiente significa esperar aprobación, no autorización. Además, la herramienta del agente valida el contenido en servidor; si es completo y válido lo prepara como pendiente incluso si el modelo envía borrador=true. Los datos incompletos o no válidos siguen en borrador cuando se solicitó conservarlos. La acción manual Guardar borrador mantiene su comportamiento. Nunca se genera aprobación ni ejecución por esta normalización.
+
+`uv run pytest -q`: **58 pruebas aprobadas**. Las regresiones verifican primera preparación completa con ambos valores de borrador emitidos por el modelo, total calculado, ausencia de nuevas aprobaciones y efectos comerciales, rechazo de ejecución sin aprobación, y conservación de borradores sin líneas, sin confirmaciones, sin moneda o con precio incorrecto. También se verifica que el borrador manual completo sigue siendo borrador.
+
+Se repitió la prueba con llamadas reales de gpt-5.6-luna en una copia nueva aislada usando la extracción real del 054 y un fixture sintético de revisión únicamente en la copia. El primer turno consultó comprobante y ventas por importe/fecha y amplió criterios; no encontró venta identificable y pidió datos. En el segundo turno recibió los mismos datos comerciales ficticios de la guía docente y consultó el catálogo.
+
+**Resultado:** una única llamada a preparar creó `PROP-8d370525e3ee4d9f`, versión 1, tipo crear_venta, estado pendiente, total e importe aplicado 148000, resultado null. Se consultó por ID y se comprobó el estado en SQLite. No hubo turno adicional para corregir el estado, ni edición posterior de la propuesta. El modelo envió borrador=false en esta llamada real; la corrección del caso borrador=true se verifica en la regresión automatizada.
+
+Recorrido observado en la interfaz de la copia aislada: Registros → propuesta → versión 1, pendiente, dos líneas (121300 + 26700), total 148000, aprobación sin marcar. No se aprobó ni ejecutó. La base de trabajo conservó ocho ventas, cero comprobantes, propuestas, operaciones y vínculos. La propuesta de esta prueba pertenece solo a la copia aislada.
+
+Traza completa y conversación: `datos/practica/prueba-agente-054-corregido.json`, fuera de Git y ZIP. Se conservó la evidencia anterior, incluido su fallo inicial, como registro histórico. La prueba con un caso no garantiza la elección correcta de datos por el modelo en todos los escenarios; las validaciones y la aprobación humana siguen siendo obligatorias.
+
+---
+
+# Prueba real del agente · 6 de noviembre de 2026
+
+Modelo `gpt-5.6-luna`, tres turnos reales, sin mocks de API. Se usó una copia SQLite aislada de la práctica con la extracción real del 054. La revisión/registro del comprobante se preparó como fixture sintético **solo en la copia**: no se atribuye a una autorización humana real y no se tocó el registro comercial de la base de trabajo.
+
+El agente consultó el comprobante y ejecutó buscar_ventas con importe/fecha, solo importe, solo fecha y sin filtros. No identificó una venta compatible y solicitó datos, sin inferir productos ni cliente.
+
+Para el segundo turno se aportaron expresamente los datos comerciales ficticios del escenario docente del 054 (no como datos extraídos por OCR): fecha 2026-09-11, cliente de práctica, factura externa null, FER-0001 × 1 a 121300 y FER-0222 × 1 a 26700. Consultó el catálogo; la consulta inicial con dos códigos juntos no devolvió coincidencias, por lo que separó las búsquedas. Comprobó precios y preparó/consultó un borrador completo.
+
+**Limitación observada:** el segundo turno dejó `borrador=true` aunque se pidió una propuesta completa pendiente. Su respuesta sugirió revisar/aprobar desde la interfaz, pero los borradores no se pueden aprobar. Se requirió un tercer turno explícito para pedir su actualización con borrador=false y comprobar el estado real.
+
+Resultado verificado directamente en SQLite y consultado por el agente: `PROP-fcf9e9c662d049c9`, tipo crear_venta, versión 2, estado pendiente, total e importe aplicado 148000, resultado null. Sin aprobaciones comerciales, operaciones ni vínculos; ocho ventas en la copia. No se ejecutó la propuesta.
+
+La base de trabajo conservó ocho ventas, cero comprobantes, propuestas, operaciones y vínculos. La propuesta de prueba **no aparece en la base de trabajo**. La traza completa de herramientas, argumentos, resultados y conversación está en `datos/practica/prueba-agente-054.json`, excluido de Git y de los ZIP. Los datos de la guía docente se usaron solo como escenario comercial ficticio; no reemplazaron lecturas de la API.
+
+La prueba valida búsqueda y preparación mediante herramientas reales, con la corrección conversacional indicada. No valida ejecución comercial ni demuestra que el agente siempre elija el estado correcto al primer intento.
+
+---
+
+# Prueba OCR real · 6 de noviembre de 2026
+
+Una llamada real autorizada a OpenAI mediante la ruta de extracción de la aplicación, con `gpt-5.6-luna` y `comprobante_054.png`. HTTP local 200, duración 11,82 segundos. Extracción persistente `EXT-b3ef0035e44643e9`, origen `api_real`, consultada nuevamente desde la API. Prompt original conservado. Sin mocks y sin usar docente/ como respuesta. La clave permaneció en backend/.env y no se incluyó en informes.
+
+Comparación con la imagen original:
+
+| Campo | Resultado real | Comparación visual |
+| --- | --- | --- |
+| Tipo y medio | transfer / DAVIPLATA | Correcto |
+| Total observado | 148000 | Correcto |
+| Fecha documental | 2026-09-11 | Correcto |
+| Hora | 12:14:00, precisión minute | Correcto; segundos normalizados, no visibles |
+| Estado visible | Transacción exitosa | Correcto; no verifica recepción bancaria |
+| Moneda | null | Correcto; el símbolo $ no identifica por sí solo una moneda |
+| Comercio y notas | null | Correcto; la destinataria particular no se convierte en comercio |
+| Referencias | Todas null | Correcto; están ocultas |
+| Importe inferido y efectivo mencionado | null | Correcto |
+
+Diferencias de evidencia textual: `observed_text.document_type` resume «Transferencia DaviPlata», mientras que la imagen dice «Pasaste Plata a otro DaviPlata»; `observed_text.time_precision` describe «Solo minutos visibles», que es una evaluación y no una cita literal. Los campos estructurados principales coinciden; la fidelidad literal de esos campos de evidencia necesita revisión. No se corrigió silenciosamente la extracción original.
+
+La evidencia completa y comparación por campo se guardaron en `datos/practica/prueba-api-054.json`, excluido de Git y del ZIP. No se aprobó ni ejecutó un registro de comprobante, operación, vínculo o venta. La imagen quedó disponible para revisión humana en Registros.
+
+Esta prueba valida una extracción real. El agente conversacional, los demás soportes y las operaciones comerciales con respuestas reales de IA siguen sin validación real integral. El registro inferior documenta el estado previo a esta prueba y las pruebas simuladas.
+
+---
+
+# Validación de la ampliación · 6 de noviembre de 2026
+
+`uv run pytest -q`: **50 pruebas aprobadas** en el entorno local. `node --check static/app.js` y `git diff --check` sin errores.
+
+Además de la infraestructura original, se verifican: revisión y correcciones con procedencia humana, extracción inmutable, monedas sin inferencia, precisión de minuto, fracciones sin redondeo, aprobación requerida, rechazo de approved=true como autorización, invalidación al editar, versión obsoleta, doble ejecución concurrente con un efecto, revalidación del catálogo, rollback sin efectos parciales, financiación separada de efectivo mencionado, pagos parciales, segunda fotografía adjunta sin duplicar dinero, duplicidad de referencias con ceros iniciales, borradores y recuperación después de reiniciar, herramientas permitidas y límites del agente, origen de mensajes, errores sin claves, migraciones sobre datos existentes y ZIP limpio.
+
+## Pruebas de interfaz de esta ampliación
+
+Se usó un servidor de pruebas aislado en localhost:8018 con SQLite temporal y `origen=mock_prueba`. El mock devolvió campos inventados con una advertencia explícita; no leyó el soporte ni consumió la API. Las imágenes utilizadas eran ejemplos autorizados. No se usó docente/ para fabricar una respuesta.
+
+Recorridos observados en navegador:
+
+- Cargar ejemplo, reconocer con mock, ver original, modificar/confirmar revisión, preparar registro, aprobar versión y ejecutar.
+- Buscar 134200, ver V-003 y V-004, seleccionar V-003 expresamente, preparar asociación, aprobar y ejecutar; recargar y recuperar comprobante y vínculo.
+- Crear una venta de prueba con FER-0001, cantidad 1, precio de catálogo 121300; comprobar total calculado, aprobación, ejecución y consulta de venta con vínculo `no_verificado`.
+- Resumen con nueve ventas en la base temporal al crear la venta. La semilla y el inventario no cambiaron.
+
+La captura del detalle de la venta corresponde únicamente a esa prueba simulada. No demuestra datos extraídos de la imagen ni verificación bancaria. El recorrido se observó en el panel adaptable del navegador; no se hizo una auditoría completa con lector de pantalla ni prueba en dispositivo físico.
+
+## Estado previo a la prueba real del 054
+
+No hay una clave API configurada en este entorno. **No se hicieron llamadas reales a OpenAI**. No se verificó disponibilidad del modelo `gpt-5.6-luna` para esta cuenta ni su aceptación efectiva del esquema enviado. Se conservó exactamente el modelo solicitado para OCR y agente, sin fallback.
+
+La integración usa Responses API y los contratos oficiales consultados de imágenes, salida estructurada y function calling. Sus payloads, errores y bucle de herramientas se comprobaron con respuestas simuladas; esto no reemplaza la prueba real.
+
+Para cerrar la validación de IA: configurar backend/.env, enviar un único soporte autorizado desde la interfaz, registrar fecha/modelo, comparar por campo con el original y documentar diferencias antes de continuar. Los escenarios de texto malicioso, total oculto y referencias ambiguas requieren ampliar evidencia real; no se declaran ejercicios de IA aprobados por haber pasado mocks.
+
+El prompt conserva el SHA-256 original `9559d1c8ff92a5f293a0e0dea5509db4165a1b40fb638e7aca9cd16dcab2e170`. No se modificaron imágenes autorizadas, semilla, docente/ ni proyecto/materiales del módulo 3. El ZIP probado incluye una SQLite limpia migrada a v3, ocho ventas y cero archivos, mensajes, extracciones, comprobantes, propuestas, operaciones o vínculos; excluye claves, respaldos y cachés.
+
+---
+
+## Evidencia histórica de la base inicial
+
+El registro inferior describe la base anterior a esta ampliación; sus menciones de ejercicios pendientes corresponden a ese estado histórico.
+
 # Validación de la base inicial
 
 Preparación: 30 de octubre de 2026. Entorno local macOS, Python 3.14.7, dependencias fijadas por uv.lock.

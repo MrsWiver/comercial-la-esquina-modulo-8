@@ -1,3 +1,5 @@
+> Estado al 6 de noviembre de 2026: los puntos de extensión descritos en esta guía ya están implementados en esta copia. El texto inferior conserva el ejercicio pedagógico original. Para usar la versión ampliada, sigue README.md: cargar → reconocer → revisar → preparar → aprobar versión → ejecutar → consultar. Las pruebas con mocks no acreditan una llamada real a OpenAI. El OCR del 054 ya se comprobó mediante una llamada real y comparación por campo (ver VALIDACION.md); el agente y el resto de escenarios reales siguen pendientes.
+
 # Construir a partir de esta base · 120 minutos
 
 Esta carpeta es el punto de partida estudiantil. No contiene una solución docente terminada. El docente representa al comerciante y aporta detalles ficticios desde su guía cuando el alumno pregunta. Los cambios se construyen con OpenCode por etapas pequeñas.

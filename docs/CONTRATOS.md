@@ -1,77 +1,72 @@
-# Contratos y límites del proyecto inicial
+# Contratos de la aplicación ampliada
 
-## Capas que ya funcionan
+Implementación local para un operador. Las escrituras requieren `X-Practica-Token` emitido al cargar la página y origen local. El modelo carece de herramientas de aprobación/ejecución. Un `approved=true` no tiene efecto.
 
-- `src/db.py`: SQL parametrizado, conexiones con claves foráneas activas y totales calculados.
-- `src/app.py`: API local, validación PNG/JPEG con Pillow, hash SHA-256, archivo temporal + renombre atómico, exclusión de duplicados por restricción UNIQUE y transacción `BEGIN IMMEDIATE`.
-- `archivos_ingresados`: evidencia cargada, sin datos extraídos. No equivale a comprobante, operación o dinero recibido.
-- `mensajes_chat`: conversación de práctica. No es una bitácora de autorizaciones.
-- Protección de escrituras: token de página y comprobación de origen. Host limitado a localhost. La interfaz usa textContent al mostrar datos externos.
+## Consultas e infraestructura
 
-El modelo no está conectado. Las rutas de ejercicio responden 501 hasta sustituir los puntos de extensión. Son contratos de arranque, no una API comercial terminada.
+Se conservan resumen, catálogo paginado, búsqueda de ventas, líneas calculadas, carga PNG/JPEG con Pillow, límite de 8 MB y 24 millones de píxeles, SHA-256, persistencia y recuperación de archivos. No hay SQL libre ni rutas de archivo provenientes del modelo. El inventario no se modifica.
 
-## API implementada
-
-| Ruta | Resultado |
+| Ruta | Contrato |
 | --- | --- |
-| GET `/api/resumen` | Conteos reales y modo `practica_sin_ia` |
-| GET `/api/productos?q=arroz&pagina=1` | 30 filas por página y total encontrado |
-| GET `/api/ventas?q=V-001&importe=130700&fecha=2026-05-11` | Filtros opcionales combinados; máximo 100 candidatos |
-| GET `/api/ventas/V-001` | Líneas, precios y total calculado |
+| GET `/api/resumen` | Conteos y modo del chat de comandos `practica_sin_ia`; no indica que el agente optativo esté deshabilitado |
+| GET `/api/configuracion` | Modelos y booleano de clave configurada; nunca devuelve la clave |
+| GET `/api/productos?q=…&pagina=1` | Catálogo, 30 filas por página |
+| GET `/api/ventas?q=…&importe=…&fecha=…` | Filtros combinados, hasta 100 candidatos |
+| GET `/api/ventas/<id>` | Líneas, total calculado y vínculos con naturaleza y estado financiero |
 | GET/POST `/api/archivos` | Lista / carga multipart con campo `archivo` |
-| GET `/archivos/ARC-…` | Evidencia original desde registro persistente |
-| GET `/api/casos` | Nombres y URLs de los 12 ejemplos; no incluye respuestas docentes |
-| GET/POST `/api/chat` | Historial / consulta JSON `{ "texto": "ventas 134200" }` |
+| GET `/archivos/<id>` | Original; 409 si falta evidencia |
+| GET `/api/casos` | Solo nombres y URLs de ejemplos; sin respuestas docentes |
+| GET/POST `/api/chat` | Historial persistente / comandos deterministas `{texto}` |
+| POST `/api/agente` | `{texto}`; Responses API con herramientas permitidas |
+| GET `/api/registros` | Hasta 100 extracciones, comprobantes, propuestas y operaciones |
 
-Todas las escrituras requieren el encabezado `X-Practica-Token` que usa el frontend. Límites: 1.000 caracteres por mensaje, 100 mensajes recuperados, 8 MB por imagen y 24 millones de píxeles. No habilitar CORS abierto ni compartir la app en Internet.
+El historial conserva `origen=determinista` o `agente_ia`. El resumen mantiene el contrato previo del chat de comandos. La activación de IA se hace expresamente en la interfaz. El agente y el OCR se configuran por separado, ambos con `gpt-5.6-luna` por decisión del usuario.
 
-## Ejercicio 1 · Extraer y registrar
+## Extracción y revisión
 
-`extraer_soporte(archivo, db)` recibe el registro interno ya validado; resuelve la ruta desde el almacén. Nunca permite rutas arbitrarias provenientes del modelo. Ruta inicial: POST `/api/extraer/<archivo_id>`.
+POST `/api/extraer/<archivo_id>` resuelve el original desde SQLite, no acepta rutas arbitrarias y usa `prompts/extractor-v1.txt` íntegro, con esquema de salida estructurada v1. El cliente usa HTTPS a Responses API con `store=false`, timeout, límite de salida y errores que no exponen credenciales. Una extracción ya guardada se reutiliza sin otra llamada.
 
-Implementar un cliente backend que lea `OPENAI_API_KEY` y `OPENAI_OCR_MODEL` desde configuración privada; la primera versión no carga `.env`. Usar exactamente `gpt-5.6-luna`. Conservar `prompts/extractor-v1.txt` sin modificar. Adjuntar el contrato `prompts/extraccion-v1.schema.json` como salida estructurada y verificar qué subconjunto admite la API vigente. Validar además fechas reales y significado: JSON válido no basta.
+La validación local comprueba JSON Schema, fechas existentes, precisión de hora, montos ausentes y financiación. La lectura conserva modelo, fecha UTC de procesamiento, hash del prompt y origen `api_real`. Mocks solo se instalan desde pruebas en bases aisladas, con origen `mock_prueba`; no existe un selector de mocks en la API pública.
 
-El esquema es una propuesta v1 del taller. Incluye clasificación desconocida como null; alternativas de instrumento; moneda explícita y estado observado; todas las referencias separadas; evidencia textual y confianza por campo. `time_precision=minute` implica segundos normalizados `00`; nunca fueron observados. No inventar zona horaria. La fecha de carga UTC vive por separado.
+GET `/api/extracciones/<id>` devuelve original y comprobante asociado, si existe. La extracción original es inmutable en SQLite. Hora documental sin zona horaria; la carga y el procesamiento tienen su propia fecha UTC.
 
-Reglas semánticas para probar al implementar:
+POST `/api/comprobantes` recibe `{extraccion_id, revision, motivo}` y **prepara una propuesta**, no escribe todavía un comprobante. La interfaz exige revisión del original. Se debe aprobar y ejecutar la propuesta con el procedimiento inferior. GET `/api/comprobantes/<id>` consulta original, revisión, correcciones y vínculos después de ejecutar.
 
-- `amount_basis=missing` exige `total_amount=null`. Un desglose puede poblar `inferred_amount`, separado y advertido.
-- Addi/Sistecrédito usan `financed_value`; no registrar como dinero recibido.
-- `stated_cash_amount` no se suma al envío. Las menciones en una conversación no prueban otro pago.
-- Si no hay comercio identificado o texto económico legible, `merchant_or_store` y `notes` son null.
-- Fechas ambiguas y referencias ocultas permanecen null; IDs de referencia son texto con ceros iniciales.
-- Un `expense` no permite cobrar ni asociar automáticamente como ingreso.
-- Confianza es evaluación del extractor, no probabilidad de autenticidad.
+Las referencias conservan texto y ceros iniciales. Las ausencias son null. Una fracción en cualquier monto original o revisado impide registrar el comprobante: se conserva la extracción para revisar el diseño monetario. Las correcciones guardan campo, valor original, nuevo valor, motivo y `revision_humana`.
 
-`registrar_comprobante(datos, db)`, POST `/api/comprobantes`, debe recibir una revisión humana explícita. Crear tablas de comprobantes y correcciones, conservar extracción original inmutable, campos corregidos, origen de la corrección y eventos. Consultar después el nuevo registro desde la app con GET por ID y mostrar imagen, lectura y estado. Eso todavía está pendiente.
+## Propuestas y autorización
 
-## Ejercicios 2 y 3 · Propuestas y efectos
+POST `/api/propuestas` recibe:
 
-`preparar_operacion(datos, db)`, POST `/api/propuestas`, produce propuesta persistente con ID, versión, tipo de operación, datos exactos, evidencia y estado `pendiente`. No ejecuta. Una persona debe revisar el contenido concreto en la interfaz y aprobar esa versión. Crear una ruta de aprobación que emita un registro en servidor. Un booleano del cliente o del modelo no sustituye ese paso.
+```json
+{"tipo":"asociar","contenido":{"comprobante_id":"CMP-…","venta_id":"V-003","importe_aplicado":134200,"moneda_confirmada":"COP","confirmacion_operacion_unica":true}}
+```
 
-`registrar_operacion_aprobada(datos, db)`, POST `/api/propuestas/ejecutar`, recibe ID/versión, valida la aprobación, revalida datos y ejecuta una sola vez en una transacción. Guardar clave idempotente UNIQUE, resultado y eventos. Si la propuesta cambia, invalidar su aprobación; si la respuesta de escritura es incierta, consultar por propuesta antes de repetir.
+Tipos permitidos: `registrar_comprobante`, `asociar`, `crear_venta`, `adjuntar_soporte`. La revisión del comprobante puede prepararse con `/api/comprobantes`.
 
-Entidades por implementar:
+- `crear_venta` requiere fecha_comercial, cliente y factura_externa como texto o null, líneas por producto_codigo/cantidad/precio_unitario y confirmacion_venta_faltante. Los precios deben coincidir con catálogo; el servidor calcula total. Cliente, factura y productos nunca se infieren del pago.
+- `adjuntar_soporte` requiere comprobante_id, operacion_id y confirmacion_mismo_documento; compara monto, naturaleza y moneda. No añade dinero.
+- `borrador=true` permite conservar una asociación o venta incompleta. No puede aprobarse.
+- Para editar, enviar `id` y `version` actual, tipo y contenido. Incrementa versión, vuelve a pendiente/borrador e invalida la aprobación anterior. Una ejecutada es inmutable.
 
-| Entidad | Datos mínimos y relación |
-| --- | --- |
-| Comprobante | Archivo, extracción original, revisión y estado de extracción |
-| Operación reportada | Naturaleza (cobro/financiación/gasto), monto y moneda, referencias, estado financiero `no_verificado` |
-| Soporte de operación | Varios archivos pueden describir una operación; no duplicar dinero |
-| Vínculo comercial | Operación, venta, importe aplicado positivo, aprobado por propuesta; una venta admite varios abonos |
-| Propuesta | ID, versión, contenido exacto, estado, revisión/aprobación y resultado idempotente |
-| Evento | Carga, edición, aprobación, ejecución o falla; sin claves ni datos personales innecesarios |
+GET `/api/propuestas/<id>` consulta contenido exacto, versión, estado y resultado.
 
-El primer taller puede limitar una operación a una venta. Una segunda imagen del mismo documento requiere comparación de referencias/contexto y posible revisión: el hash solo detecta archivos idénticos. Estados de revisión, asociación y verificación financiera se conservan por separado.
+POST `/api/propuestas/<id>/aprobar`, `{version, confirmacion:"REVISADO"}`, es una acción humana separada en la interfaz. El servidor revalida el contenido y guarda un registro de aprobación con versión y hash del contenido. La ruta no está entre las herramientas del agente. El booleano de singularidad es una declaración de revisión, no una autorización de ejecución.
 
-Crear venta: pedir fecha comercial, productos, cantidades y precios confirmados. Consultar el catálogo; total por código, no por aritmética del modelo. Cliente y factura externa pueden quedar ausentes cuando no son necesarios; nunca inferirlos. Generar un ID interno distinto de una factura externa. Si faltan líneas, mantener borrador. No actualizar inventario. La creación y su vínculo aprobado deben ser atómicos.
+POST `/api/propuestas/ejecutar`, `{id, version}`, exige la aprobación emitida por el servidor y revalida precios, saldos, comprobantes y referencias. Usa `BEGIN IMMEDIATE`, clave de ejecución UNIQUE por propuesta/versión y resultado persistente. Repetir la misma ejecución devuelve ese resultado, incluso tras reiniciar. Si cambia la versión o el contenido, la aprobación anterior no sirve.
 
-## Agente conversacional
+Crear venta, líneas, operación, soporte y vínculo ocurre en una sola transacción. Una falla revierte todos los efectos. Si la respuesta se pierde, consultar la propuesta antes de reintentar.
 
-El chat inicial es explícitamente determinista. Al ampliarlo, el modelo debe elegir herramientas permitidas (buscar, consultar catálogo, pedir datos, preparar) y usar sus resultados. No presentar reglas `if/else` como razonamiento de un agente. No dar SQL arbitrario, rutas de disco ni capacidad de autoaprobarse. Separar modelo conversacional de `OPENAI_OCR_MODEL`; elegir y configurar el primero de manera explícita. Limitar pasos (por ejemplo 6), tiempo, tamaño de entradas y reintentos. Conservar propuestas entre reinicios; no confiar en memoria del proceso.
+## Operaciones y alcance
 
-## Recuperación y migraciones
+Una operación admite varios soportes y un vínculo a una venta. Una venta admite varios abonos. Importe aplicado positivo y limitado por monto observado y saldo comercial. La financiación se identifica separadamente del cobro. El efectivo mencionado no se suma. Gastos o documentos sin clasificar no pueden asociarse como ingreso.
 
-La semilla es portable y nunca lee el módulo 3 al arrancar. El esquema inicial tiene `PRAGMA user_version=1`. Al ampliar, añadir migraciones versionadas; `CREATE TABLE IF NOT EXISTS` no actualiza bases existentes.
+Referencias coincidentes (excepto factura) bloquean otra operación y remiten a revisión/adjuntar. El hash no identifica una segunda foto del mismo documento; cuando faltan referencias se requiere comparación y confirmación humana. No se declara autenticidad ni recepción bancaria: `estado_financiero=no_verificado` siempre.
 
-La escritura del archivo y SQLite son dos operaciones distintas. La base renombra el original antes del commit; limpia temporales/huérfanos al iniciar y comunica evidencia ausente sin fingir éxito. Ejecutar una sola instancia por carpeta. El reinicio respaldado incluye DB, chat e imágenes; las futuras tablas también deben vivir en esa SQLite para entrar en el respaldo.
+## Agente y recuperación
+
+Herramientas: buscar ventas, consultar catálogo/venta/comprobante/propuesta y preparar propuestas comerciales o borradores. No hay extracción masiva, aprobación, ejecución, SQL libre ni navegación. En la herramienta preparar del agente, un contenido completo y válido se guarda como pendiente incluso si el modelo marca borrador=true; únicamente los contenidos incompletos/no válidos permanecen en borrador cuando se solicita conservarlos. Esta normalización no aprueba ni ejecuta y no cambia la opción manual Guardar borrador. Máximo seis llamadas a herramientas/seis pasos y presupuesto de 90 segundos por turno, con timeout de red acotado. Historial de 20 mensajes como contexto; conversación recuperable hasta 100 mensajes. Los borradores y propuestas viven en SQLite, no en memoria del modelo.
+
+Migraciones: v1 infraestructura, v2 tablas comerciales y trigger de extracción inmutable, v3 origen del historial. Se aplican en transacción y conservan datos. Una versión futura se rechaza. Respaldo y reinicio incluyen la carpeta completa.
+
+Implementación basada en los contratos de [salida estructurada](https://developers.openai.com/api/docs/guides/structured-outputs), [herramientas](https://developers.openai.com/api/docs/guides/function-calling) e [imágenes](https://developers.openai.com/api/docs/guides/images-vision). El OCR se comprobó con una llamada real del soporte 054 en esta cuenta; el agente con herramientas y los otros escenarios siguen pendientes de validación real. No se cambia de modelo automáticamente.
